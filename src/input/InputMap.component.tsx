@@ -1,0 +1,322 @@
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLocationDot, faLocationCrosshairs } from "@fortawesome/free-solid-svg-icons";
+import { GoogleMap, LoadScript } from "@react-google-maps/api";
+const LoadScriptComponent = LoadScript as any;
+const GoogleMapComponent = GoogleMap as any;
+import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
+import { BottomSheetComponent, ButtonComponent, OutsideClickComponent } from "@components";
+
+
+
+type CT = "label" | "tip" | "error" | "input" | "icon";
+
+export interface ValueMapProps {
+  lat       :  number | null;
+  lng       :  number | null;
+  address  ?:  string;
+}
+
+export interface InputMapProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
+  label      ?:  string;
+  tip        ?:  string | React.ReactNode;
+  leftIcon   ?:  any;
+  rightIcon  ?:  any;
+
+  value        ?:  any;
+  invalid      ?:  string;
+  validations  ?:  ValidationRules;
+
+  onChange  ?:  (value: any) => any;
+  register    ?:  (name: string, validations?: ValidationRules) => void;
+  unregister  ?:  (name: string) => void;
+
+  className  ?:  string;
+}
+
+
+
+export function InputMapComponent({
+  label,
+  tip,
+  leftIcon,
+  rightIcon,
+
+  value,
+  invalid,
+  validations,
+  
+  register,
+  unregister,
+  onChange,
+  
+  className = "",
+  ...props
+}: InputMapProps) {
+  const { isSm }  =  useResponsive();
+
+  // =========================>
+  // ## Invalid handler
+  // =========================>
+  const inputHandler  =  useInputHandler(props.name, value, validations, register, unregister, false)
+  const randomId      =  useInputRandomId()
+
+
+  // =========================>
+  // ## Invalid handler
+  // =========================>
+  const [invalidMessage]  =  useValidation(inputHandler.value, validations, invalid, inputHandler.idle);
+
+
+  return (
+    <>
+      <div className="input-container">
+      {label && (
+        <label
+          htmlFor={randomId}
+          className={cn(
+            "input-label",
+            props.disabled && "input-label-disabled",
+            inputHandler.focus && "input-label-focus",
+            !!invalidMessage && "input-label-error",
+            pcn<CT>(className, "label"),
+          )}
+        >
+          {label}
+          {validations && validation.hasRules(validations, "required") && <span className="text-danger ml-1">*</span>}
+        </label>
+      )}
+
+      {tip && (
+        <small
+          className={cn(
+            "input-tip",
+            props.disabled && "input-tip-disabled",
+            pcn<CT>(className, "tip"),
+          )}
+        >{tip}</small>
+      )}
+
+      <OutsideClickComponent onOutsideClick={!isSm ? () => inputHandler.setFocus(false) : undefined}>
+        <div className="relative">
+          <input
+            {...props}
+            id={randomId}
+            className={cn(
+              "input",
+              leftIcon && "input-with-left-icon",
+              rightIcon && "input-with-right-icon",
+              pcn<CT>(className, "input"),
+              !!invalidMessage && "input-error",
+            )}
+            value={inputHandler.value?.address || ""}
+            readOnly
+            onFocus={(e) => {
+              props.onFocus?.(e);
+              inputHandler.setFocus(true);
+              inputHandler.setIdle(false);
+            }}
+            autoComplete="off"
+          />
+
+          {leftIcon && (
+            <FontAwesomeIcon
+              className={cn(
+                "input-icon",
+                "input-icon-left",
+                props.disabled && "input-icon-disabled",
+                inputHandler.focus && "input-icon-focus",
+                pcn<CT>(className, "icon"),
+              )}
+              icon={leftIcon}
+            />
+          )}
+
+          {rightIcon && (
+            <FontAwesomeIcon
+              className={cn(
+                "input-icon",
+                "input-icon-right",
+                props.disabled && "input-icon-disabled",
+                inputHandler.focus && "input-icon-focus",
+                pcn<CT>(className, "icon"),
+              )}
+              icon={rightIcon}
+            />
+          )}
+
+          {!isSm && inputHandler.focus && (
+            <div
+              className="input-map-suggest-container"
+              style={{ height: 300 }}
+            >
+              <InputMapPickerComponent 
+                value={inputHandler.value}
+                onChange={(e) => {
+                  inputHandler.setValue(e)
+                  onChange?.(e)
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </OutsideClickComponent>
+
+      {invalidMessage && (
+        <small className={cn("input-error-message", pcn<CT>(className, "error"))}>{invalidMessage}</small>
+      )}
+    </div>
+
+    {isSm && (
+      <BottomSheetComponent
+        show={inputHandler.focus}
+        onClose={() => inputHandler.setFocus(false)}
+        size={450}
+        footer={
+          <div className="p-4">
+            <ButtonComponent
+              label="Selesai"
+              variant="outline"
+              onClick={() => inputHandler.setFocus(false)}
+              block
+            />
+          </div>
+        }
+      >
+        <div className="p-4">
+          <InputMapPickerComponent
+            onChange={(e) => {
+              inputHandler.setValue(e);
+              onChange?.(e);
+            }}
+          />
+        </div>
+      </BottomSheetComponent>
+    )}
+    </>
+  );
+}
+
+
+export interface MapPickerProps {
+  value     ?:  any;
+  onChange  ?:  (value: any) => any;
+}
+
+export const InputMapPickerComponent: React.FC<MapPickerProps> = ({
+  onChange,
+  value
+}) => {
+  const mapRef  =  useRef<google.maps.Map | null>(null);
+
+  const [addressLoading, setAddressLoading]  =  useState(false);
+  const [drag, setDrag]                      =  useState(false);
+
+
+  // =========================>
+  // ## Map Events
+  // =========================>
+  const setCurrentPosition = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const newPos = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          address: "",
+        };
+
+        onChange?.(newPos);
+        mapRef.current?.panTo(new google.maps.LatLng(newPos.lat, newPos.lng));
+      });
+    }
+  };
+
+
+  const handleDragEnd = useCallback(() => {
+    if (mapRef.current) {
+      const center = mapRef.current.getCenter();
+
+      if (center) {
+        onChange?.({
+          lat: center.lat(),
+          lng: center.lng(),
+          address: "",
+        });
+      }
+
+      setDrag(false);
+    }
+  }, []);
+
+
+  // =========================>
+  // ## Reverse Geocode
+  // =========================>
+  useEffect(() => {
+    if (value?.lat && value?.lng) {
+      setAddressLoading(true);
+      onChange?.((prev: any) => ({ ...prev, address: "" }));
+
+      axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${value?.lat}&lon=${value?.lng}&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_KEY}`)
+        .then((res: any) => {
+          if (res.status === 200 && !res.data.error) {
+            const data = res.data.features?.at(0)?.properties;
+            const address =(data?.address_line1 || "") + " " + (data?.address_line2 || "");
+
+            onChange?.((prev: any) => ({ ...prev, address }));
+            onChange?.({ ...value, address });
+          }
+        })
+        .finally(() => setAddressLoading(false));
+    }
+  }, [value?.lat, value?.lng]);
+
+  return (
+    <div className="relative w-full">
+      <LoadScriptComponent googleMapsApiKey={process.env.NEXT_PUBLIC_MAP_KEY || ""}>
+        <GoogleMapComponent
+          mapContainerStyle={{ width: "100%", height: "100%" }}
+          center={{
+            lat: value?.lat || -6.208,
+            lng: value?.lng || 106.689,
+          }}
+          zoom={18}
+          options={{
+            streetViewControl: false,
+            mapTypeControl: false,
+            fullscreenControl: false,
+          }}
+          onLoad={(map: any) => {mapRef.current = map}}
+          onDrag={() => setDrag(true)}
+          onDragEnd={handleDragEnd}
+        />
+      </LoadScriptComponent>
+
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <FontAwesomeIcon
+          icon={faLocationDot}
+          className={cn(
+            "input-map-marker",
+            drag && "input-map-marker-drag",
+          )}
+        />
+      </div>
+
+      <div className="input-map-badge-left">
+        {addressLoading && !value?.address ? (
+          <div className="py-4 w-[200px]" />
+        ) : (
+          <span className="text-sm">{value?.address}</span>
+        )}
+      </div>
+
+      <div
+        className="input-map-badge-right"
+        onClick={() => setCurrentPosition()}
+      ><FontAwesomeIcon icon={faLocationCrosshairs} className="text-lg" /></div>
+    </div>
+  )
+}

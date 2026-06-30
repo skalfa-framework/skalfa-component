@@ -1,0 +1,44 @@
+{
+  "name": "@skalfa/skalfa-component",
+  "version": "1.0.0",
+  "description": "Core reusable UI components for Skalfa applications.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "skalfa",
+    "components",
+    "ui"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@skalfa/skalfa-app-core": "^1.0.0",
+    "next": "^15.0.0 || ^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@skalfa/skalfa-app-core": "^1.0.7",
+    "@react-google-maps/api": "^2.20.7",
+    "@types/google.maps": "^3.58.1",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "next": "16.1.1",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "typescript": "^6.0.3"
+  }
+}
