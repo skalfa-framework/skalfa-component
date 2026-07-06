@@ -14,8 +14,6 @@ export interface HeadbarProps {
 };
 
 
-
-
 export function HeadbarComponent({ title, backHref, rightContent }: HeadbarProps) {
   const router  =  useRouter();
 
