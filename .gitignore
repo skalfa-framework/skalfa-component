@@ -15,3 +15,4 @@ npm-debug.log*
 # compiled output accidentally written to src/ (e.g. running tsc without tsconfig)
 src/**/*.js
 src/**/*.d.ts
+!src/types.d.ts
