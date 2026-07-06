@@ -1,6 +1,6 @@
 {
   "name": "@skalfa/skalfa-component",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Core reusable UI components for Skalfa applications.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
