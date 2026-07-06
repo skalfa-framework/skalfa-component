@@ -1,6 +1,6 @@
 {
   "name": "@skalfa/skalfa-component",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Core reusable UI components for Skalfa applications.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "postbuild": "bun fix-exports.js"
   },
   "keywords": [
     "skalfa",

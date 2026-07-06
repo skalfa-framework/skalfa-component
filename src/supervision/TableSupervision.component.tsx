@@ -5,7 +5,14 @@ import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
 import { faEdit, faFileExcel, faFilePdf, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { ApiType, cn, conversion, FetchControlType, registry, shortcut, ShortcutHandler, UseResourceIdb, UseResourceProps, useResponsive, useTable } from "@utils";
 import { useToggleContext } from "@contexts";
-import { FloatingPageComponent, FloatingPageProps, ButtonComponent, TableColumnType, TableComponent, FormSupervisionComponent, FormType, ModalConfirmComponent, TypographyColumnComponent, ButtonProps, ModalConfirmProps, TableProps, ControlBarOptionType, BottomSheetComponent } from "@components";
+import { FloatingPageComponent, FloatingPageProps } from "../modal/FloatingPage.component";
+import { ButtonComponent, ButtonProps } from "../button/Button.component";
+import { TableColumnType, TableComponent, TableProps } from "../table/Table.component";
+import { FormSupervisionComponent, FormType } from "./FormSupervision.component";
+import { ModalConfirmComponent, ModalConfirmProps } from "../modal/ModalConfirm.component";
+import { TypographyColumnComponent } from "../typography/TypographyColumn.component";
+import { ControlBarOptionType } from "../table/ControlBar.component";
+import { BottomSheetComponent } from "../modal/BottomSheet.component";
 
 const ExportExcel = registry.get("ExportExcel");
 const ImportExcel = registry.get("ImportExcel");

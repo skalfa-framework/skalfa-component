@@ -5,7 +5,9 @@ import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
-import { BottomSheetComponent, ButtonComponent, OutsideClickComponent } from "@components";
+import { BottomSheetComponent } from "../modal/BottomSheet.component";
+import { ButtonComponent } from "../button/Button.component";
+import { OutsideClickComponent } from "../wrap/OutsideClick.component";
 
 
 

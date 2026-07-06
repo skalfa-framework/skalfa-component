@@ -4,7 +4,9 @@ import { useState, useRef, InputHTMLAttributes, ReactNode } from "react";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn, registry, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
-import { ButtonComponent, FloatingPageComponent, BottomSheetComponent } from "@components";
+import { ButtonComponent } from "../button/Button.component";
+import { FloatingPageComponent } from "../modal/FloatingPage.component";
+import { BottomSheetComponent } from "../modal/BottomSheet.component";
 
 const DocumentViewerComponent = (props: any) => {
   const Comp = registry.get("DocumentViewerComponent");

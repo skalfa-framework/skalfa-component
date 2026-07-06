@@ -3,7 +3,12 @@
 import { InputHTMLAttributes, ReactNode, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
-import { OutsideClickComponent, InputDatePickerComponent, InputTimePickerComponent, BottomSheetComponent, ButtonComponent, TabbarComponent } from "@components";
+import { OutsideClickComponent } from "../wrap/OutsideClick.component";
+import { InputDatePickerComponent } from "./InputDate.component";
+import { InputTimePickerComponent } from "./InputTime.component";
+import { BottomSheetComponent } from "../modal/BottomSheet.component";
+import { ButtonComponent } from "../button/Button.component";
+import { TabbarComponent } from "../nav/Tabbar.component";
 
 
 

@@ -4,7 +4,12 @@ import { isValidElement, ReactNode, useEffect, useMemo, useRef, useState } from 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDownZA, faArrowUpAZ, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { ApiFilterType, cn, pcn, useLazySearch, useResponsive } from "@utils";
-import { ControlBarComponent, ControlBarOptionType, PaginationComponent, PaginationProps, ScrollContainerComponent, FilterColumnOption, CheckboxComponent, SwipeComponent, SwipeActionType } from "@components";
+import { ControlBarComponent, ControlBarOptionType } from "./ControlBar.component";
+import { PaginationComponent, PaginationProps } from "./Pagination.component";
+import { ScrollContainerComponent } from "../wrap/ScrollContainer.component";
+import { FilterColumnOption } from "./FilterComponent";
+import { CheckboxComponent } from "../input/Checkbox.component";
+import { SwipeComponent, SwipeActionType } from "../wrap/Swipe.component";
 
 type CT = "controller-bar" | "head-column" | "column" | "row" | "floating-action" | "base";
 

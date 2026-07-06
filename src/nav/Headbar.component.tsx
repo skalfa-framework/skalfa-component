@@ -4,7 +4,8 @@ import { ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faHistory, faPowerOff, faUser, faUserCog } from "@fortawesome/free-solid-svg-icons";
-import { ImageComponent, OutsideClickComponent } from "@components";
+import { ImageComponent } from "../wrap/Image.component";
+import { OutsideClickComponent } from "../wrap/OutsideClick.component";
 import { cn, auth } from "@utils";
 
 export interface HeadbarUserProps {

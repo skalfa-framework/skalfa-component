@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandHolding, faImages, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
-import { BottomSheetComponent, ButtonComponent, ModalComponent } from "@components";
+import { BottomSheetComponent } from "../modal/BottomSheet.component";
+import { ButtonComponent } from "../button/Button.component";
+import { ModalComponent } from "../modal/Modal.component";
 
 
 type CT = "label" | "error" | "input" | "tip";

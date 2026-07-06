@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { faChevronUp, faEllipsisH, faPlus, faRotate, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ApiFilterType, cn, pcn, useResponsive } from "@utils";
-import {ButtonComponent, ChipComponent, InputComponent, InputCurrencyComponent, InputDateComponent, InputNumberComponent, ModalComponent, SelectComponent} from "@components";
+import { ButtonComponent } from "../button/Button.component";
+import { ChipComponent } from "../chip/Chip.component";
+import { InputComponent } from "../input/Input.component";
+import { InputCurrencyComponent } from "../input/InputCurrency.component";
+import { InputDateComponent } from "../input/InputDate.component";
+import { InputNumberComponent } from "../input/InputNumber.component";
+import { ModalComponent } from "../modal/Modal.component";
+import { SelectComponent } from "../input/Select.component";
 import { useToggleContext } from "@contexts";
 import { faBookmark } from "@fortawesome/free-regular-svg-icons";
 

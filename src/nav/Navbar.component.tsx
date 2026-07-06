@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faHistory, faStore, faUser } from "@fortawesome/free-solid-svg-icons";
-import { ButtonComponent } from "@components";
+import { ButtonComponent } from "../button/Button.component";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { cn } from "@utils";
 

@@ -3,37 +3,22 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { faSave, faQuestionCircle, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ApiType, cn, pcn, FormErrorType, FormRegisterType, FormValueType, useForm, ValidationRules, DBSchema } from "@utils";
-import {
-  InputCheckboxComponent,
-  InputComponent,
-  InputCurrencyComponent,
-  InputDateComponent,
-  InputNumberComponent,
-  InputOtpComponent,
-  InputPasswordComponent,
-  InputRadioComponent,
-  SelectComponent,
-  ButtonComponent,
-  ModalConfirmComponent,
-  ToastComponent,
-  InputProps,
-  InputCheckboxProps,
-  InputCurrencyProps,
-  InputDateProps,
-  InputNumberProps,
-  InputRadioProps,
-  SelectProps,
-  InputPasswordProps,
-  InputOtpProps,
-  InputTimeProps,
-  InputImageProps,
-  InputDateTimeProps,
-  InputDatetimeComponent,
-  InputTimeComponent,
-  InputImageComponent,
-  InputMapComponent,
-  InputMapProps,
-} from "@components";
+import { InputCheckboxComponent, InputCheckboxProps } from "../input/InputCheckbox.component";
+import { InputComponent, InputProps } from "../input/Input.component";
+import { InputCurrencyComponent, InputCurrencyProps } from "../input/InputCurrency.component";
+import { InputDateComponent, InputDateProps } from "../input/InputDate.component";
+import { InputNumberComponent, InputNumberProps } from "../input/InputNumber.component";
+import { InputOtpComponent, InputOtpProps } from "../input/InputOtp.component";
+import { InputPasswordComponent, InputPasswordProps } from "../input/InputPassword.component";
+import { InputRadioComponent, InputRadioProps } from "../input/InputRadio.component";
+import { SelectComponent, SelectProps } from "../input/Select.component";
+import { ButtonComponent } from "../button/Button.component";
+import { ModalConfirmComponent } from "../modal/ModalConfirm.component";
+import { ToastComponent } from "../modal/Toast.component";
+import { InputTimeProps, InputTimeComponent } from "../input/InputTime.component";
+import { InputImageProps, InputImageComponent } from "../input/InputImage.component";
+import { InputDateTimeProps, InputDatetimeComponent } from "../input/InputDatetime.component";
+import { InputMapComponent, InputMapProps } from "../input/InputMap.component";
 
 
 

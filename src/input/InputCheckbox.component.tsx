@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { api, ApiType, cn, pcn, useInputHandler, useValidation, validation, ValidationRules } from "@utils";
-import { CheckboxComponent } from "@components";
+import { CheckboxComponent } from "./Checkbox.component";
 
 
 

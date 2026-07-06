@@ -4,7 +4,9 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { faQuestion } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, ApiType, cn, pcn, registry, shortcut, useResponsive } from "@utils";
-import { ToastComponent, ButtonComponent, ButtonProps, BottomSheetComponent } from "@components";
+import { ToastComponent } from "./Toast.component";
+import { ButtonComponent, ButtonProps } from "../button/Button.component";
+import { BottomSheetComponent } from "./BottomSheet.component";
 
 
 

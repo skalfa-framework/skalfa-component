@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn } from "@utils";
-import { ButtonComponent, InputRadioComponent } from "@components";
+import { ButtonComponent } from "../button/Button.component";
+import { InputRadioComponent } from "../input/InputRadio.component";
 
 type CT = "item" | "active" | "base";
 

@@ -3,7 +3,7 @@
 import { useEffect, Fragment } from "react";
 import { shortcut } from "@utils"
 import { useToggleContext } from "@contexts"
-import { ModalComponent } from "@components";
+import { ModalComponent } from "../modal/Modal.component";
 
 export function ShortcutProvider() {
   const { setToggle, toggle } = useToggleContext();

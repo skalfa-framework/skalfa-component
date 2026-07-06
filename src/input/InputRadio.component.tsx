@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { api, ApiType, cn, pcn, useInputHandler, useValidation, validation, ValidationRules } from "@utils";
-import { RadioComponent } from "@components";
+import { RadioComponent } from "./Radio.component";
 
 
 

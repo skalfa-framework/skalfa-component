@@ -8,7 +8,9 @@ import { GoogleMap, LoadScript } from "@react-google-maps/api";
 const LoadScriptComponent = LoadScript as any;
 const GoogleMapComponent = GoogleMap as any;
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
-import { BottomSheetComponent, ButtonComponent, OutsideClickComponent } from "@components";
+import { BottomSheetComponent } from "../modal/BottomSheet.component";
+import { ButtonComponent } from "../button/Button.component";
+import { OutsideClickComponent } from "../wrap/OutsideClick.component";
 
 
 
