@@ -17,7 +17,6 @@ export * from "./input/InputDate.component";
 export * from "./input/InputDatetime.component";
 export * from "./input/InputDocument.component";
 export * from "./input/InputImage.component";
-export * from "./input/InputMap.component";
 export * from "./input/InputNumber.component";
 export * from "./input/InputOtp.component";
 export * from "./input/InputPassword.component";

@@ -18,7 +18,6 @@ import { ToastComponent } from "../modal/Toast.component";
 import { InputTimeProps, InputTimeComponent } from "../input/InputTime.component";
 import { InputImageProps, InputImageComponent } from "../input/InputImage.component";
 import { InputDateTimeProps, InputDatetimeComponent } from "../input/InputDatetime.component";
-import { InputMapComponent, InputMapProps } from "../input/InputMap.component";
 
 
 
@@ -73,7 +72,6 @@ type ConstructionMap = {
   select            :  SelectProps;
   "enter-password"  :  InputPasswordProps;
   otp               :  InputOtpProps;
-  map               :  InputMapProps;
   custom            :  formCustomConstructionProps;
 };
 
@@ -274,7 +272,6 @@ export function FormSupervisionComponent({
     "enter-password"  :  InputPasswordComponent,
     otp               :  InputOtpComponent,
     image             :  InputImageComponent,
-    map               :  InputMapComponent,
     cluster           :  () => null,
     custom            :  () => null,
   };
