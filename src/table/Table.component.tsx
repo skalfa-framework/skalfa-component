@@ -3,7 +3,7 @@
 import { isValidElement, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDownZA, faArrowUpAZ, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { ApiFilterType, cn, pcn, useLazySearch, useResponsive } from "@utils";
+import { ApiFilterType, cn, pcn, useLazySearch, useResponsive, conversion } from "@utils";
 import { ControlBarComponent, ControlBarOptionType } from "./ControlBar.component";
 import { PaginationComponent, PaginationProps } from "./Pagination.component";
 import { ScrollContainerComponent } from "../wrap/ScrollContainer.component";
@@ -25,6 +25,7 @@ export interface TableColumnType {
     type      :  "select";
     options   :  { label: string; value: any }[];
   };
+  conversion ?:  keyof typeof conversion;
   className  ?:  string;
   item       ?:  (data: any) => string | ReactNode;
   tip        ?:  string | ((data: any) => string);
@@ -176,7 +177,11 @@ export function TableComponent({
         return column.item(item);
       }
 
-      const value = item[column.selector];
+      let value = item[column.selector];
+
+      if (column.conversion && conversion[column.conversion]) {
+        value = (conversion as any)[column.conversion](value as never);
+      }
 
       if (isValidElement(value)) {
         return value;
