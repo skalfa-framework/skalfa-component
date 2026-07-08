@@ -1,12 +1,12 @@
 {
   "name": "@skalfa/skalfa-component",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Reusable UI components for Skalfa App.",
   "license": "MIT",
   "keywords": ["skalfa", "skalfa-app", "skalfa-component", "next-framework", "next-template"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": ["dist", "src"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "postbuild": "bun fix-exports.js"
