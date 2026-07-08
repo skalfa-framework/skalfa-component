@@ -55,11 +55,11 @@ export * from "./wrap/ShortcutProvider";
 export * from "./wrap/Swipe.component";
 
 import { registry } from "@utils";
-import { TableComponent } from "./table/Table.component.js";
-import { ButtonComponent } from "./button/Button.component.js";
-import { SelectComponent } from "./input/Select.component.js";
-import { ModalComponent } from "./modal/Modal.component.js";
-import { FilterComponent } from "./table/FilterComponent.js";
+import { TableComponent } from "./table/Table.component";
+import { ButtonComponent } from "./button/Button.component";
+import { SelectComponent } from "./input/Select.component";
+import { ModalComponent } from "./modal/Modal.component";
+import { FilterComponent } from "./table/FilterComponent";
 import { useToggleContext } from "@contexts";
 
 registry.register("TableComponent", TableComponent);
