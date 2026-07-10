@@ -54,7 +54,7 @@ export function InputDateComponent({
   // =========================>
   // ## Initial
   // =========================>
-  const inputHandler = useInputHandler(props.name, value, validations, register, unregister, false)
+  const inputHandler = useInputHandler(props.name, value, validations, register, false)
   const randomId = useInputRandomId()
 
 

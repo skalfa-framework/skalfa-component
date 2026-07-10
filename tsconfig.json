@@ -19,11 +19,12 @@
         "./node_modules/@skalfa/skalfa-app-core/dist/index.d.ts"
       ],
       "@utils": [
-        "../skalfa-app-core/src",
-        "./node_modules/@skalfa/skalfa-app-core/dist/index.d.ts"
+        "../skalfa-app-core/dist",
+        "../skalfa-app-core/dist/index.d.ts",
+        "./node_modules/@skalfa/skalfa-app-core/dist"
       ],
       "@utils/*": [
-        "../skalfa-app-core/src/*",
+        "../skalfa-app-core/dist/*",
         "./node_modules/@skalfa/skalfa-app-core/dist/*"
       ],
       "@components": ["./src/index.ts"],

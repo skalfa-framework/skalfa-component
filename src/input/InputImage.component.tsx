@@ -56,7 +56,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
   const [cropSrc, setCropSrc]    =  useState<string | null>(null);
   const [openCrop, setOpenCrop]  =  useState(false);
 
-  const inputHandler                         =  useInputHandler(name, value, validations, register, unregister, true);
+  const inputHandler                         =  useInputHandler(name, value, validations, register, true);
   const [invalidMessage, setInvalidMessage]  =  useValidation(inputHandler.value, validations, invalid, inputHandler.idle);
 
   useEffect(() => {

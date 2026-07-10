@@ -105,7 +105,7 @@ export function SelectComponent({
   // =========================>
   // ## Initial
   // =========================>
-  const inputHandler  =  useInputHandler(name, value, validations, register, unregister, false)
+  const inputHandler  =  useInputHandler(name, value, validations, register, false)
   const randomId      =  useInputRandomId()
 
 
