@@ -18,6 +18,9 @@
         "../skalfa-app-core/dist/index.d.ts",
         "./node_modules/@skalfa/skalfa-app-core/dist/index.d.ts"
       ],
+      "@contexts": [
+        "./src/contexts-mock.ts"
+      ],
       "@utils": [
         "../skalfa-app-core/dist",
         "../skalfa-app-core/dist/index.d.ts",
