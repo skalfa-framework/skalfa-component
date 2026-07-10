@@ -1,7 +1,7 @@
 "use client"
 
 import { FC, InputHTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
 import { BottomSheetComponent } from "../modal/BottomSheet.component";
 import { ButtonComponent } from "../button/Button.component";
@@ -117,7 +117,7 @@ export function InputTimeComponent({
             />
 
             {leftIcon && (
-              <FontAwesomeIcon
+              <Icon
                 className={cn(
                   "input-icon",
                   "input-icon-left",
@@ -130,7 +130,7 @@ export function InputTimeComponent({
             )}
 
             {rightIcon && (
-              <FontAwesomeIcon
+              <Icon
                 className={cn(
                   "input-icon",
                   "input-icon-right",

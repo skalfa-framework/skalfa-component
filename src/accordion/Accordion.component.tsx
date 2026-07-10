@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { ReactNode, useEffect, useState } from "react";
-import { faChevronDown, faChevronLeft } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn } from "@utils";
 
 
@@ -63,7 +63,7 @@ export function AccordionComponent({
                 isActive !== key && "rotate-180",
               )}
             >
-              <FontAwesomeIcon icon={horizontal ? faChevronLeft : faChevronDown} />
+              <Icon icon={horizontal ? "solid/chevron-left" : "solid/chevron-down"} />
             </div>
           </div>
           <div

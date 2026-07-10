@@ -1,7 +1,7 @@
 "use client"
 
 import { InputHTMLAttributes, ReactNode, useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
 import { OutsideClickComponent } from "../wrap/OutsideClick.component";
 import { InputDatePickerComponent } from "./InputDate.component";
@@ -17,8 +17,8 @@ type CT = "label" | "tip" | "error" | "input" | "icon";
 export interface InputDateTimeProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label      ?:  string;
   tip        ?:  string | ReactNode;
-  leftIcon   ?:  any;
-  rightIcon  ?:  any;
+  leftIcon   ?:  IconName;
+  rightIcon  ?:  IconName;
 
   value        ?:  string;
   invalid      ?:  string;
@@ -143,7 +143,7 @@ export function InputDatetimeComponent({
             />
 
             {leftIcon && (
-              <FontAwesomeIcon
+              <Icon
                 className={cn(
                   "input-icon",
                   "input-icon-left",
@@ -156,7 +156,7 @@ export function InputDatetimeComponent({
             )}
 
             {rightIcon && (
-              <FontAwesomeIcon
+              <Icon
                 className={cn(
                   "input-icon",
                   "input-icon-right",

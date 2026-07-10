@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { faChevronUp, faEllipsisH, faPlus, faRotate, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ApiFilterType, cn, pcn, useResponsive } from "@utils";
 import { ButtonComponent } from "../button/Button.component";
 import { ChipComponent } from "../chip/Chip.component";
@@ -12,7 +11,6 @@ import { InputNumberComponent } from "../input/InputNumber.component";
 import { ModalComponent } from "../modal/Modal.component";
 import { SelectComponent } from "../input/Select.component";
 import { useToggleContext } from "@contexts";
-import { faBookmark } from "@fortawesome/free-regular-svg-icons";
 
 type CT = "base" | "title";
 
@@ -122,7 +120,7 @@ export function FilterComponent({
           <div className="filter-panel-controls">
             <div className="filter-panel-bookmarks-wrapper">
               <ButtonComponent
-                icon={faBookmark}
+                icon="solid/bookmark"
                 variant="outline"
                 paint="primary"
                 className="filter-panel-bookmark-btn icon::text-slate-400"
@@ -140,7 +138,7 @@ export function FilterComponent({
 
               {bookmarks?.length > 5 && (
                 <ButtonComponent
-                  icon={faEllipsisH}
+                  icon="solid/ellipsis-h"
                   variant="outline"
                   paint="primary"
                   className="filter-panel-bookmark-btn icon::text-slate-400"
@@ -151,7 +149,7 @@ export function FilterComponent({
             </div>
 
             <ButtonComponent
-              icon={faRotate}
+              icon="solid/rotate"
               label="Bersihkan"
               variant="outline"
               paint="primary"
@@ -162,7 +160,7 @@ export function FilterComponent({
 
             {onMinimize && (
               <ButtonComponent
-                icon={faChevronUp}
+                icon="solid/chevron-up"
                 variant="outline"
                 paint="primary"
                 className="filter-panel-bookmark-btn icon::text-slate-400"
@@ -218,7 +216,7 @@ export function FilterComponent({
               
               {isSm && (
                 <ButtonComponent 
-                  icon={faTimes}
+                  icon="solid/times"
                   paint="danger"
                   variant="outline"
                   onClick={() => removeFilter(i)}
@@ -244,7 +242,7 @@ export function FilterComponent({
 
               {!isSm && (
                 <ButtonComponent 
-                  icon={faTimes}
+                  icon="solid/times"
                   paint="danger"
                   variant="outline"
                   onClick={() => removeFilter(i)}
@@ -257,7 +255,7 @@ export function FilterComponent({
 
         <ButtonComponent
           label="Tambahkan"
-          icon={faPlus}
+          icon="solid/plus"
           variant="outline"
           paint="primary"
           size={isSm ? "xs" : "sm"}
@@ -277,7 +275,7 @@ export function FilterComponent({
               <p className="filter-bookmark-name">{b.name}</p>
               <div className="flex gap-2">
                 <ButtonComponent
-                  icon={faPlus}
+                  icon="solid/plus"
                   variant="outline"
                   paint="primary"
                   className=""
@@ -288,7 +286,7 @@ export function FilterComponent({
                   }}
                 />
                 <ButtonComponent
-                  icon={faTimes}
+                  icon="solid/times"
                   variant="outline"
                   paint="danger"
                   className=""

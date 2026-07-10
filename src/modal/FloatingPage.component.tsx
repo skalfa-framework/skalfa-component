@@ -1,9 +1,9 @@
 "use client"
 
 import { ReactNode, useEffect } from "react";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ButtonComponent } from "../button/Button.component";
-import { cn, pcn, shortcut } from "@utils";
+import { cn, pcn, shortcut, useResponsive } from "@utils";
+import { BottomSheetComponent } from "./BottomSheet.component";
 
 
 
@@ -16,9 +16,12 @@ export interface FloatingPageProps {
   children  ?:  any;
   tip       ?:  string | ReactNode;
   footer    ?:  string | ReactNode;
+  size      ?:  string | number;
+  maxSize   ?:  string | number;
 
   /** Use custom class with: "backdrop::", "header::", "footer::". */
   className  ?:  string;
+
 };
 
 
@@ -31,7 +34,10 @@ export function FloatingPageComponent({
   tip,
   footer,
   className = "",
+  size,
+  maxSize,
 }: FloatingPageProps) {
+  const { isSm } = useResponsive();
 
   useEffect(() => {
     if (show) {
@@ -49,6 +55,30 @@ export function FloatingPageComponent({
       shortcut.unregister("escape")
     }
   }, [show]);
+
+  if (isSm) {
+    return (
+      <BottomSheetComponent
+        show={show}
+        onClose={onClose}
+        size={size}
+        maxSize={maxSize}
+        footer={footer}
+        className={className}
+      >
+        <div className={cn("modal-header", pcn<CT>(className, "header"))}>
+          {title && (
+            <div>
+              <h6 className="modal-title">{title}</h6>
+              {tip && <p className="modal-tip">{tip}</p>}
+            </div>
+          )}
+        </div>
+
+        {show && children}
+      </BottomSheetComponent>
+    );
+  }
 
   return (
     <>
@@ -77,7 +107,7 @@ export function FloatingPageComponent({
           )}
 
           <ButtonComponent
-            icon={faTimes}
+            icon="solid/times"
             variant="simple"
             paint="danger"
             onClick={() => onClose()}

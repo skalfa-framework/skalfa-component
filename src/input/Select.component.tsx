@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { ReactNode, useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faChevronDown, faTimes,} from "@fortawesome/free-solid-svg-icons";
 import { api, ApiType, cavity, cn, pcn, registry, useInputHandler, useInputRandomId, useLazySearch, useValidation, validation, ValidationRules,} from "@utils";
 
 
@@ -403,8 +403,8 @@ export function SelectComponent({
                   return (
                     <div key={key} className="input-values-item">
                       <span>{dataOptions?.find((option) => option.value == item)?.label}</span>
-                      <FontAwesomeIcon
-                        icon={faTimes}
+                      <Icon
+                        icon="solid/times"
                         className="input-values-delete"
                         onClick={() => {
                           const values = Array().concat(inputHandler.value);
@@ -428,7 +428,7 @@ export function SelectComponent({
 
 
           {leftIcon && (
-            <FontAwesomeIcon
+            <Icon
               className={cn(
                 "input-icon",
                 "input-icon-left",
@@ -457,7 +457,7 @@ export function SelectComponent({
                 onChange?.("");
               }}
             >
-              <FontAwesomeIcon icon={faTimes} />
+              <Icon icon="solid/times" />
             </div>
           )}
 
@@ -472,7 +472,7 @@ export function SelectComponent({
               disabled && pcn<CT>(className, "icon", "disabled")
             )}
           >
-            <FontAwesomeIcon icon={faChevronDown} />
+            <Icon icon="solid/chevron-down" />
           </label>
         </div>
 
@@ -535,8 +535,8 @@ export function SelectComponent({
                       }}
                     >
                       {selected && (
-                        <FontAwesomeIcon
-                          icon={faCheck}
+                        <Icon
+                          icon="solid/check"
                           className="select-suggest-check"
                         />
                       )}

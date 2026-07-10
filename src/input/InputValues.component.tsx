@@ -1,6 +1,5 @@
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
 import { CSSProperties } from 'react';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { cn } from '@utils';
 
 export function InputValues({
@@ -30,8 +29,8 @@ export function InputValues({
               return (
                 <div key={key} className="input-values-item">
                   <span className="">{item}</span>
-                  <FontAwesomeIcon
-                    icon={faTimes}
+                  <Icon
+                    icon="solid/times"
                     className="input-values-delete"
                     onClick={() =>  onDelete?.(item, key)}
                   />
@@ -55,8 +54,8 @@ export function InputValues({
               return (
                 <div key={key} className="input-values-item">
                   <span>{item}</span>
-                  <FontAwesomeIcon
-                    icon={faTimes}
+                  <Icon
+                    icon="solid/times"
                     className="input-values-delete"
                     onClick={() =>  onDelete?.(item, key)}
                   />

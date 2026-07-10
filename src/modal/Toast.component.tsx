@@ -1,7 +1,6 @@
 "use client"
 
 import { ReactNode, useEffect, useState } from "react";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn } from "@utils";
 import { ButtonComponent } from "../button/Button.component";
 
@@ -99,7 +98,7 @@ export function ToastComponent({
             <div className="flex gap-2 items-center">
               <span className="text-xs text-foreground/50">{countdown}</span>
               <ButtonComponent
-                icon={faTimes}
+                icon="solid/times"
                 variant="simple"
                 paint="danger"
                 onClick={() => {

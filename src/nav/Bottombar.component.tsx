@@ -1,14 +1,13 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClipboard, faCrosshairs, faHome, faSackDollar, faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn, useKeyboardOpen } from "@utils";
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 export interface BottombarItemProps {
-  icon       :  IconDefinition;
+  icon       :  IconName;
   path       :  string;
   activeKey ?:  string;
 }
@@ -20,11 +19,11 @@ export interface BottombarProps {
 }
 
 const defaultItems: BottombarItemProps[] = [
-  { icon: faHome, path: "/_example/bottombar", activeKey: "home" },
-  { icon: faClipboard, path: "/", activeKey: "clipboard" },
-  { icon: faCrosshairs, path: "/", activeKey: "crosshairs" },
-  { icon: faSackDollar, path: "/", activeKey: "sack-dollar" },
-  { icon: faUserCircle, path: "/", activeKey: "profile" },
+  { icon: "solid/home", path: "/_example/bottombar", activeKey: "home" },
+  { icon: "solid/clipboard", path: "/", activeKey: "clipboard" },
+  { icon: "solid/crosshairs", path: "/", activeKey: "crosshairs" },
+  { icon: "solid/sack-dollar", path: "/", activeKey: "sack-dollar" },
+  { icon: "solid/user-circle", path: "/", activeKey: "profile" },
 ];
 
 export function BottombarComponent({
@@ -60,7 +59,7 @@ export function BottombarComponent({
                     isActive && pcn(className, "active"),
                   )}
                 >
-                  <FontAwesomeIcon icon={item.icon} />
+                  <Icon icon={item.icon} />
                 </div>
               </Link>
             );

@@ -1,7 +1,7 @@
 "use client"
 
 import { InputHTMLAttributes, ReactNode } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
 import { cn, conversion, pcn, useInputHandler, useInputRandomId, useValidation, validation, ValidationRules } from "@utils";
 
 
@@ -11,8 +11,8 @@ type CT = "label" | "tip" | "error" | "input" | "icon";
 export interface InputCurrencyProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label      ?:  string;
   tip        ?:  string | ReactNode;
-  leftIcon   ?:  any;
-  rightIcon  ?:  any;
+  leftIcon   ?:  IconName;
+  rightIcon  ?:  IconName;
 
   value        ?:  number;
   invalid      ?:  string;
@@ -128,7 +128,7 @@ export function InputCurrencyComponent({
         />
 
         {leftIcon && (
-          <FontAwesomeIcon
+          <Icon
             className={cn(
               "input-icon",
               "input-icon-left",
@@ -142,7 +142,7 @@ export function InputCurrencyComponent({
           />
         )}
         {rightIcon && (
-          <FontAwesomeIcon
+          <Icon
             className={cn(
               "input-icon",
               "input-icon-right",

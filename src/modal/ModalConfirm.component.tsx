@@ -1,12 +1,9 @@
 "use client"
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import { faQuestion } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, ApiType, cn, pcn, registry, shortcut, useResponsive } from "@utils";
-import { ToastComponent } from "./Toast.component";
-import { ButtonComponent, ButtonProps } from "../button/Button.component";
-import { BottomSheetComponent } from "./BottomSheet.component";
+import { ButtonComponent, ButtonProps, BottomSheetComponent } from "@components";
+import { Icon } from "@skalfa/skalfa-icon";
 
 
 
@@ -37,7 +34,6 @@ export function ModalConfirmComponent({
   show,
   title,
   children,
-  icon,
   footer,
 
   submitControl,
@@ -66,47 +62,59 @@ export function ModalConfirmComponent({
   }, [show]);
   
 
-  const renderChildren = useMemo(() => {
+  const renderChildren = (actionSize: ButtonProps["size"] = 'md') => {
+    if (toast == "success") {
+      return (
+        <div className="flex flex-col items-center justify-center h-full py-6 transition-all duration-300 animate-intro-down">
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
+            <Icon icon={"solid/check"} className="text-primary text-2xl" />
+          </div>
+          <p className="text-primary text-lg font-semibold mt-4">{"Berhasil!"}</p>
+        </div>
+      )
+    }
+
     return (
       <>
         {title && (
           <div
             className={cn(
-              "flex flex-col gap-2 items-center text-primary",
+              "flex flex-col gap-2 p-6",
               pcn<CT>(className, "header")
             )}
           >
-            <div className="mt-6">
-              <FontAwesomeIcon
-                icon={icon || faQuestion}
-                className={`text-xl`}
-              />
-            </div>
-
             <h6 className="font-semibold text-lg">{title}</h6>
           </div>
         )}
 
         {children}
 
-        {footer && (
-          <div className={cn("modal-footer", pcn<CT>(className, "footer"))}>
-            {footer}
+        {toast == "failed" && (
+          <div className="px-4">
+            <div className="mt-4 w-full p-4 rounded-sm border border-danger bg-light-danger flex gap-4 items-center">
+              <div>
+                <div className="w-10 h-10 rounded-full bg-danger/20 flex items-center justify-center">
+                  <Icon icon={"solid/exclamation-triangle"} className="text-danger text-lg" />
+                </div>
+              </div>
+              <p className="text-danger text-sm font-semibold">{"Terjadi Masalah, Coba ulangi lagi!"}</p>
+            </div>
           </div>
         )}
+
+        {renderAction(actionSize)}
       </>
     )
-  }, [title, footer, children])
+  }
 
 
   const renderAction = (size: ButtonProps["size"] = 'md') => {
     return (
-      <div className="flex justify-center pt-6">
+      <div className="flex justify-center gap-4 p-6 pt-2">
         <ButtonComponent
           label="Batal"
-          variant="simple"
+          variant="outline"
           onClick={() => onClose()}
-          className="text-foreground bg-background rounded-none"
           block
           size={size}
         />
@@ -138,16 +146,17 @@ export function ModalConfirmComponent({
 
               if (response?.status == 200 || response?.status == 201) {
                 setToast("success");
+                setTimeout(() => setToast(false), 1000);
                 submitControl?.onSuccess?.();
                 setLoading(false);
               } else {
                 setToast("failed");
+                setTimeout(() => setToast(false), 5000);
                 submitControl?.onError?.();
                 setLoading(false);
               }
             }
           }}
-          className="rounded-none"
           block
           size={size}
           {...submitControl}
@@ -176,9 +185,7 @@ export function ModalConfirmComponent({
               pcn<CT>(className, "base")
             )}
           >
-            {renderChildren}
-
-            {renderAction()}
+            {renderChildren()}
           </div>
         </>
       ) : (
@@ -187,33 +194,11 @@ export function ModalConfirmComponent({
             show={show}
             onClose={onClose}
             size={220}
-            footer={renderAction('lg')}
           >
-            {renderChildren}
+            {renderChildren('lg')}
           </BottomSheetComponent>
         </>
       )}
-      
-
-      <ToastComponent
-        show={toast == "failed"}
-        onClose={() => setToast(false)}
-        title="Gagal"
-        className="!border-danger header::text-danger"
-      >
-        <p className="px-3 pb-2 text-sm">
-          Gagal {title || ""}! cek data dan koneksi internet dan coba kembali!
-        </p>
-      </ToastComponent>
-
-      <ToastComponent
-        show={toast == "success"}
-        onClose={() => setToast(false)}
-        title="Berhasil"
-        className="!border-success header::text-success"
-      >
-        <p className="px-3 pb-2 text-sm">Berhasil {title || ""}!</p>
-      </ToastComponent>
     </>
   );
 }

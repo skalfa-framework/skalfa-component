@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { useEffect, useState } from "react";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn } from "@utils";
 import { ButtonComponent } from "../button/Button.component";
 import { InputRadioComponent } from "../input/InputRadio.component";
@@ -62,7 +62,7 @@ export function PaginationComponent({
                 className="pagination-overflow"
                 onClick={() => onChange?.(totalRow, paginate, page - 1)}
               >
-                <FontAwesomeIcon icon={faChevronLeft} />
+                <Icon icon="solid/chevron-left" />
               </button>
             )}
 
@@ -111,7 +111,7 @@ export function PaginationComponent({
                 className="pagination-overflow"
                 onClick={() => onChange?.(totalRow, paginate, page + 1)}
               >
-                <FontAwesomeIcon icon={faChevronRight} />
+                <Icon icon="solid/chevron-right" />
               </button>
             )}
           </div>
@@ -132,14 +132,14 @@ export function PaginationComponent({
           <div className="pagination-mobile-controls">
             {page > 1 && (
               <ButtonComponent 
-                icon={faChevronLeft}
+                icon="solid/chevron-left"
                 onClick={() => onChange?.(totalRow, paginate, page - 1)}
                 size="sm"
               />
             )}
             {page < lastPage && (
               <ButtonComponent 
-                icon={faChevronRight}
+                icon="solid/chevron-right"
                 onClick={() => onChange?.(totalRow, paginate, page + 1)}
                 size="sm"
               />

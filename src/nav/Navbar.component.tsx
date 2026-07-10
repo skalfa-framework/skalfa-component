@@ -1,10 +1,9 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faHistory, faStore, faUser } from "@fortawesome/free-solid-svg-icons";
 import { ButtonComponent } from "../button/Button.component";
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { cn } from "@utils";
 
 export interface NavbarItemProps {
@@ -16,7 +15,7 @@ export interface NavbarProps {
   logoTitle    ?:  string;
   logoSubtitle ?:  string;
   logoPath     ?:  string;
-  specialLink  ?:  { label: string; path: string; icon?: IconDefinition };
+  specialLink  ?:  { label: string; path: string; icon?: IconName };
   items        ?:  NavbarItemProps[];
   isLoggedIn   ?:  boolean;
   onLogin      ?:  () => void;
@@ -34,8 +33,8 @@ const defaultItems: NavbarItemProps[] = [
 const defaultSpecialLink = {
   label: "Special Link",
   path: "",
-  icon: faStore,
-};
+  icon: "solid/store",
+} as const;
 
 export function NavbarComponent({
   logoTitle = "Next Light v.3",
@@ -56,7 +55,7 @@ export function NavbarComponent({
           <h2 className="text-base">
             Ini untuk
             <Link href={specialLink.path} className="navbar-special-link">
-              {specialLink.icon && <FontAwesomeIcon icon={specialLink.icon} className="mr-1" />}
+              {specialLink.icon && <Icon icon={specialLink.icon} className="mr-1" />}
               {specialLink.label}
             </Link>
           </h2>
@@ -113,10 +112,10 @@ export function NavbarComponent({
               ) : (
                 <div className="flex gap-2 w-max items-center">
                   <div className="p-2 text-light-foreground hover:text-foreground cursor-pointer">
-                    <FontAwesomeIcon icon={faHistory} />
+                    <Icon icon="solid/history" />
                   </div>
                   <div className="p-2 text-light-foreground hover:text-foreground cursor-pointer">
-                    <FontAwesomeIcon icon={faBell} />
+                    <Icon icon="solid/bell" />
                   </div>
                   <div className="h-5 w-[1px] bg-foreground mx-2.5"></div>
                   <div
@@ -124,7 +123,7 @@ export function NavbarComponent({
                     onClick={onProfile}
                   >
                     <div className="h-10 bg-background rounded-full aspect-square overflow-hidden flex justify-center items-center">
-                      <FontAwesomeIcon icon={faUser} />
+                      <Icon icon="solid/user" />
                     </div>
                   </div>
                 </div>

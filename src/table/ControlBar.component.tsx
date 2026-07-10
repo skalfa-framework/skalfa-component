@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { ReactNode, useEffect, useRef } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowDownZA, faArrowUpAZ, faEllipsisV, faEyeLowVision, faMagnifyingGlass, faPlus, faRefresh, faSearch, faSliders, faSort } from '@fortawesome/free-solid-svg-icons';
 import { ApiFilterType, cn, conversion, shortcut, useResponsive } from '@utils';
 import { useToggleContext } from '@contexts';
 import { InputCheckboxComponent } from "../input/InputCheckbox.component";
@@ -121,7 +121,7 @@ export function ControlBarComponent({
     <>
       <div className={cn("control-bar", className)}>
         {(isSm ? [
-          ...(options?.filter((op, iop) => iop == 0 || op == "REFRESH") || []), 
+          ...(options?.filter((op) => op == "SEARCH" || op == "REFRESH") || []), 
           ...(options && options?.length > 1 ? ['MOBILE_OPTION'] : [])
         ] : options)?.map((option: ControlBarOptionType, key: number) => {
           {
@@ -133,7 +133,7 @@ export function ControlBarComponent({
             return (
               <div className="control-bar-create-wrapper" key="button-add">
                 <ButtonComponent
-                  icon={faPlus}
+                  icon="solid/plus"
                   label="Tambah Data"
                   size="sm"
                   onClick={() => setToggle(`MODAL_FORM_${conversion.strSnake(id).toUpperCase()}`)}
@@ -156,7 +156,7 @@ export function ControlBarComponent({
                   ref={searchRef}
                   name="search"
                   placeholder="Cari disini..."
-                  rightIcon={faMagnifyingGlass}
+                  rightIcon="solid/magnifying-glass"
                   value={search}
                   onChange={(e) => onSearch?.(e)}
                   className={cn("control-bar-search-input", searchable && "control-bar-search-input-searchable")}
@@ -175,7 +175,7 @@ export function ControlBarComponent({
               <div className="control-bar-searchable-wrapper" key={key}>
                 <SelectComponent
                   name="searchableColumn"
-                  leftIcon={faSearch}
+                  leftIcon="solid/search"
                   options={searchableOptions?.map((column) => {
                     return {
                       label: column.label,
@@ -200,7 +200,7 @@ export function ControlBarComponent({
             return (
               <div className="control-bar-button-wrapper" key={key}>
                 <ButtonComponent
-                  icon={faEyeLowVision}
+                  icon="solid/eye-low-vision"
                   variant="outline"
                   className="control-bar-icon-button"
                   onClick={() => setToggle("SELECTABLE")}
@@ -243,7 +243,7 @@ export function ControlBarComponent({
             return sortableOptions?.length ? (
               <div className="control-bar-button-wrapper" key={key}>
                 <ButtonComponent
-                  icon={faSort}
+                  icon="solid/sort"
                   variant="outline"
                   className="control-bar-icon-button"
                   onClick={() => setToggle("SORT")}
@@ -270,7 +270,7 @@ export function ControlBarComponent({
 
                             {sortBy && (
                               <div className='control-bar-sort-active-icon'>
-                                <FontAwesomeIcon icon={sortBy == "desc" ? faArrowDownZA : faArrowUpAZ} className='control-bar-sort-icon' /> 
+                                <Icon icon={sortBy == "desc" ? "solid/arrow-down-z-a" : "solid/arrow-up-a-z"} className='control-bar-sort-icon' /> 
                                 {sort?.length && sort?.length > 1 && <span className='control-bar-sort-badge'>{sort.findIndex((s) => s.split(" ")?.at(0) == option?.selector) + 1}</span>}
                               </div>
                             )}
@@ -293,7 +293,7 @@ export function ControlBarComponent({
             return (
               <div className="control-bar-button-wrapper-refresh" key={key}>
                 <ButtonComponent
-                  icon={faRefresh}
+                  icon="solid/refresh"
                   variant="outline"
                   className="control-bar-icon-button"
                   onClick={() => onRefresh?.()}
@@ -312,7 +312,7 @@ export function ControlBarComponent({
             return (
               <div className="control-bar-button-wrapper" key={key}>
                 <ButtonComponent
-                  icon={faSliders}
+                  icon="solid/sliders"
                   label="Filter"
                   variant="outline"
                   className="control-bar-filter-button"
@@ -332,7 +332,7 @@ export function ControlBarComponent({
             return (
               <div className="control-bar-button-wrapper" key={key}>
                 <ButtonComponent
-                  icon={faEllipsisV}
+                  icon="solid/ellipsis-v"
                   variant="outline"
                   className="control-bar-icon-button"
                   onClick={() => setToggle("MOBILE_OPTION")}
@@ -365,7 +365,7 @@ export function ControlBarComponent({
           maxSize="98vh"
         >
           <div className='control-bar-mobile-container'>
-            {options?.filter((op, iop) => (iop != 0 && op != "CREATE" && op != "REFRESH"))?.map((option: ControlBarOptionType, key: number) => {
+            {options?.filter((op, iop) => (iop != 0 && op != "CREATE" && op != "SEARCH" && op != "REFRESH"))?.map((option: ControlBarOptionType, key: number) => {
               {
                 // =========================>
                 // ## Search Field
@@ -377,7 +377,7 @@ export function ControlBarComponent({
                     <InputComponent
                       name="search"
                       placeholder="Cari disini..."
-                      rightIcon={faMagnifyingGlass}
+                      rightIcon="solid/magnifying-glass"
                       value={search}
                       onChange={(e) => onSearch?.(e)}
                     />
@@ -395,7 +395,7 @@ export function ControlBarComponent({
                   <div key={key}>
                     <SelectComponent
                       name="searchableColumn"
-                      leftIcon={faSearch}
+                      leftIcon="solid/search"
                       options={searchableOptions?.map((column) => {
                         return {
                           label: column.label,
@@ -459,7 +459,7 @@ export function ControlBarComponent({
 
                             {sortBy && (
                               <div className='text-primary'>
-                                <FontAwesomeIcon icon={sortBy == "desc" ? faArrowDownZA : faArrowUpAZ} className='text-xs' /> 
+                                <Icon icon={sortBy == "desc" ? "solid/arrow-down-z-a" : "solid/arrow-up-a-z"} className='text-xs' /> 
                                 {sort?.length && sort?.length > 1 && <span className='text-[9px] ml-1'>{sort.findIndex((s) => s.split(" ")?.at(0) == option?.selector) + 1}</span>}
                               </div>
                             )}

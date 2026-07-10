@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHandHolding, faImages, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
 import { BottomSheetComponent } from "../modal/BottomSheet.component";
 import { ButtonComponent } from "../button/Button.component";
@@ -172,7 +171,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
           onDrop={onDropFile}
         >
           <div className="input-image-dropzone-content">
-            <FontAwesomeIcon icon={drag ? faHandHolding : faImages} className="text-3xl" />
+            <Icon icon={drag ? "solid/hand-holding" : "solid/images"} className="text-3xl" />
             <p className="input-image-dropzone-text">{drag ? "Letakkan di sini" : preview  ? "Klik atau seret untuk ganti Gambar" : "Klik atau seret gambar"}</p>
           </div>
 
@@ -190,7 +189,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
 
       {preview && !disabled && (
         <ButtonComponent
-          icon={faTimes}
+          icon="solid/times"
           paint="danger"
           size="sm"
           className="absolute top-10 right-4"

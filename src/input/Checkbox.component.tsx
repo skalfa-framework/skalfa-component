@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { ReactNode, useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn, useInputRandomId } from "@utils";
 
 type CT  =  "label" | "checked" | "error" | "base";
@@ -78,7 +78,7 @@ export function CheckboxComponent({
               pcn<CT>(className, "base"),
             )}
           >
-            {checked && <FontAwesomeIcon icon={faCheck} className="text-sm" />}
+            {checked && <Icon icon="solid/check" className="text-sm" />}
           </div>
         </div>
         <span

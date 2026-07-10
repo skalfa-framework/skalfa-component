@@ -1,7 +1,7 @@
 "use client"
 
 import { InputHTMLAttributes, ReactNode, useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useValidation, validation, ValidationRules } from "@utils";
 
 
@@ -145,7 +145,7 @@ export function InputPasswordComponent({
         />
 
         {leftIcon && (
-          <FontAwesomeIcon
+          <Icon
             className={cn(
               "input-icon",
               "input-icon-left",
@@ -155,7 +155,7 @@ export function InputPasswordComponent({
           />
         )}
         {rightIcon && (
-          <FontAwesomeIcon
+          <Icon
             className={cn(
               "input-icon",
               "input-icon-right",

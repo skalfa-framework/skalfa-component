@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { useState, useRef, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn } from "@utils";
 
 
@@ -96,13 +96,13 @@ export function CarouselComponent({
             className={cn("carousel-btn carousel-prev-btn", pcn<CT>(className, "prev-button"))}
             onClick={handlePrev}
           >
-            <FontAwesomeIcon icon={faChevronLeft} />
+            <Icon icon="solid/chevron-left" />
           </button>
           <button
             className={cn("carousel-btn carousel-next-btn", pcn<CT>(className, "next-button"))}
             onClick={handleNext}
           >
-            <FontAwesomeIcon icon={faChevronRight} />
+            <Icon icon="solid/chevron-right" />
           </button>
         </>
       )}

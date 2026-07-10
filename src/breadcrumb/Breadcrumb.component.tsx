@@ -1,9 +1,9 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { Fragment, ReactNode } from "react";
 import Link from "next/link";
-import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn } from "@utils";
 
 
@@ -64,8 +64,8 @@ export function BreadcrumbComponent({
               {!isActive && (
                 <li className="breadcrumb-separator">
                   {separatorContent || (
-                    <FontAwesomeIcon
-                      icon={faChevronRight}
+                    <Icon
+                      icon="solid/chevron-right"
                     />
                   )}
                 </li>

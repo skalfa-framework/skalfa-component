@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
 import { cn, pcn } from "@utils";
 
 type CT = "icon" | "loading" | "base";
@@ -18,7 +18,7 @@ export interface ButtonProps {
   size      ?:  "xs" | "sm" | "md" | "lg";
   onClick   ?:  any;
   href      ?:  string;
-  icon      ?:  any;
+  icon      ?:  IconName;
   loading   ?:  boolean;
   hover     ?:  boolean;
   tips      ?:  string; // Tooltip / title attribute
@@ -67,7 +67,7 @@ export function ButtonComponent({
         <div className={cn("button-loading", pcn<CT>(className, "loading"))}></div>
       ) : (
         icon && (
-          <FontAwesomeIcon
+          <Icon
             icon={icon}
             className={cn("button-icon", pcn<CT>(className, "icon"))}
           />

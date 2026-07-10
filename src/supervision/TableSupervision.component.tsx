@@ -1,22 +1,13 @@
 "use client"
 
-import { ReactNode, Suspense, useEffect, useMemo } from "react";
-import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
-import { faEdit, faFileExcel, faFilePdf, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { ApiType, cn, conversion, FetchControlType, registry, shortcut, ShortcutHandler, UseResourceIdb, UseResourceProps, useResponsive, useTable } from "@utils";
+import { ReactNode, useEffect, useMemo } from "react";
+import { ApiType, cn, conversion, registry, shortcut, ShortcutHandler, UseResourceIdb, UseResourceProps, useResponsive, useTable } from "@utils";
 import { useToggleContext } from "@contexts";
-import { FloatingPageComponent, FloatingPageProps } from "../modal/FloatingPage.component";
-import { ButtonComponent, ButtonProps } from "../button/Button.component";
-import { TableColumnType, TableComponent, TableProps } from "../table/Table.component";
-import { FormSupervisionComponent, FormType } from "./FormSupervision.component";
-import { ModalConfirmComponent, ModalConfirmProps } from "../modal/ModalConfirm.component";
-import { TypographyColumnComponent } from "../typography/TypographyColumn.component";
-import { ControlBarOptionType } from "../table/ControlBar.component";
-import { BottomSheetComponent } from "../modal/BottomSheet.component";
+import { FloatingPageComponent, FloatingPageProps, ButtonComponent, TableColumnType, TableComponent, FormSupervisionComponent, FormType, ModalConfirmComponent, TypographyColumnComponent, ButtonProps, ModalConfirmProps, TableProps, ControlBarOptionType, SwipeActionType, BottomSheetProps } from "../";
+import { useLang } from "@skalfa/skalfa-lang";
 
 const ExportExcel = registry.get("ExportExcel");
 const ImportExcel = registry.get("ImportExcel");
-
 
 
 export interface TableSupervisionColumnProps {
@@ -34,58 +25,46 @@ export interface TableSupervisionColumnProps {
   accessCode  ?:  string;
   item        ?:  (data: any) => string | ReactNode;
   tip         ?:  string | ((data: any) => string);
-  exportable  ?:  boolean | "default" | "optional" | "hidden";
-  importable  ?:  boolean;
-}
+};
 
 export interface TableSupervisionFormProps {
   fields                :  string[] | (FormType & { visibility?: "*" | "create" | "update" })[];
   defaultValue        ?:  (item: Record<string, any> | null) => Promise<Record<string, any>> | Record<string, any>;
   payload             ?:  (values: any) => Promise<Record<string, any>> | object;
-  modalControl        ?:  Omit<FloatingPageProps, "show" | "onClose" | "children">;
+  modalControl        ?:  Omit<FloatingPageProps, "show" | "onClose" | "children"> | Omit<BottomSheetProps, "show" | "onClose" | "children">;
   contentType         ?:  "application/json" | "multipart/form-data";
-}
-
+};
 
 export type TableSupervisionDetailProps = boolean 
-  | (
-    | string 
-    | { label: string, item: string | ((data: Record<string, any>) => ReactNode), conversion?: keyof typeof conversion }
-    | ((data: Record<string, any>) => ReactNode)
-  )[] 
-  | ((data: Record<string, any>) => void)
-  | {
-      modal?: Omit<FloatingPageProps, "show" | "onClose" | "children">;
-      content?: boolean 
-        | (
-          | string 
-          | { label: string, item: string | ((data: Record<string, any>) => ReactNode), conversion?: keyof typeof conversion }
-          | ((data: Record<string, any>) => ReactNode)
-        )[] 
-        | ((data: Record<string, any>) => ReactNode);
-      action?: (data: Record<string, any>) => void;
-    };
+    | (
+      | string 
+      | { label: string, item: string | ((data: Record<string, any>) => ReactNode), conversion?: keyof typeof conversion }
+      | ((data: Record<string, any>) => ReactNode)
+    )[] 
+    | ((data: Record<string, any>) => ReactNode);
 
 export type TableSupervisionProps = {
   fetchControl     :  UseResourceProps;
   title           ?:  string;
   id              ?:  string;
   accessCode      ?:  number;
-  urlParam        ?:  boolean | { compressed    ?:  boolean };
+  urlParam        ?:  boolean | { compressed    ?:  boolean }
+  onRowClick      ?:  (data: Record<string, any>) => void;
   columnControl   ?:  string[] | TableSupervisionColumnProps[];
   formControl     ?:  TableSupervisionFormProps;
   detailControl   ?:  TableSupervisionDetailProps;
   actionControl   ?:  boolean | (
     | 'EDIT' | 'DELETE' | {
       label           :  string,
-      modal          ?:  Omit<ModalConfirmProps, "show" | "onClose">,
+      modal          ?:  ModalConfirmProps,
       button         ?:  ButtonProps,
       shortcut       ?:  { key: string, description: string },
     } | ((
-      row              :  Record<string, any>,
-      setModal         :  (type: "EDIT" | "DELETE") => void,
+      row              :  object,
+      setModal        ?:  (type: "EDIT" | "DELETE") => void,
       setDataSelected ?:  () => void,
-      setShortcut     ?:  (key: string, handler: ShortcutHandler, description?: string) => void
+      setShortcut     ?:  (key: string, handler: ShortcutHandler, description?: string) => void,
+      size            ?:  string,
     ) => ReactNode)
   )[];
   block                ?:  boolean,
@@ -93,9 +72,12 @@ export type TableSupervisionProps = {
   actionBulkingControl ?:  TableProps["actionBulking"],
   controlBar           ?:  (ControlBarOptionType | "CREATE" | "IMPORT" | "EXPORT" | "PRINT")[];
   responsiveControl    ?:  {
-    mobile            ?:  TableProps["responsiveControl"] extends { mobile?: infer M } ? M | boolean : boolean;
-  };
-  importControl        ?:  FetchControlType;
+    mobile                 ?:  boolean | {
+      item                 ?:  (item: Record<string, any>, key: number) => ReactNode,
+      leftActionControl    ?:  Omit<SwipeActionType, "onAction"> & { onAction?: (item: Record<string, any>, key?: number) => void },
+      rightActionControl   ?:  Omit<SwipeActionType, "onAction"> & { onAction?: (item: Record<string, any>, key?: number) => void },
+    }
+  }
 };
 
 
@@ -106,6 +88,7 @@ export function TableSupervisionComponent({
   fetchControl,
   columnControl,
   formControl,
+  onRowClick,
   detailControl,
   actionControl,
   actionBulkingControl,
@@ -114,87 +97,66 @@ export function TableSupervisionComponent({
   noIndex,
   responsiveControl,
   urlParam,
-  importControl,
 }: TableSupervisionProps) {
-  const { tableKey, tableControl, data, selected, setSelected, checks, setChecks, reset, focus }  =  useTable(fetchControl, id, title, (urlParam || true))
+  const l = useLang();
+
+  const { tableKey, tableControl, data, selected, setSelected, checks, setChecks, reset, focus, setFocus }  =  useTable(fetchControl, id, title, (urlParam || true))
   const { setToggle, toggle }                                                                               =  useToggleContext()
   const { isSm }                                                                                            =  useResponsive();
 
-  const isDetailControlObject = detailControl && typeof detailControl === "object" && !Array.isArray(detailControl);
-  const detailAction = isDetailControlObject 
-    ? (detailControl as any)?.action 
-    : (typeof detailControl === "function" ? detailControl : undefined);
-  const detailContent = isDetailControlObject 
-    ? (detailControl as any)?.content 
-    : (typeof detailControl === "function" ? undefined : detailControl);
-  const detailModalProps = isDetailControlObject 
-    ? (detailControl as any)?.modal 
-    : undefined;
-
   const toggleKey = useMemo(() => conversion.strSnake(tableKey).toUpperCase(), [tableKey])
 
-  // ============================
-  // ## Shortcut register
-  // ============================
+
   useEffect(() => {
-    if(!isSm) {
-      if (controlBar == undefined || controlBar?.includes("CREATE")) {
-        shortcut.register("alt+n", () => {
+    if(data?.data?.length && !toggle[`MODAL_DELETE_${toggleKey}`] && !toggle[`MODAL_DELETE_${toggleKey}`] && !toggle[`MODAL_SHOW_${toggleKey}`]) {
+      shortcut.register("arrowdown", () => {
+        const max = data?.data?.length - 1;
+        setFocus(focus == null ? 0 : focus >= max ? max : (focus + 1))
+      }, "Pilih data kebawah")
+
+      shortcut.register("arrowup", () => {
+        setFocus(focus == null ? 0 : focus <= 0 ? 0 : (focus - 1))
+      }, "Pilih data keatas")
+
+      if(focus != null) {
+        shortcut.register("delete", () => {
+          setSelected(data?.data?.at(focus))
+          setToggle(`MODAL_DELETE_${toggleKey}`)
+        }, "Delete data yang dipilih")
+
+        shortcut.register(" ", () => {
+          setSelected(data?.data?.at(focus))
           setToggle(`MODAL_FORM_${toggleKey}`)
-          setSelected(null)
-        }, "Tambah Data Baru")
-      }
+        }, "Edit data yang dipilih")
   
-      if (controlBar?.includes("IMPORT")) {
-        shortcut.register("alt+i", () => {
-          setToggle(`MODAL_IMPORT_${toggleKey}`)
-        }, "Import Data Dari Excel")
-      }
-  
-      if (controlBar?.includes("EXPORT")) {
-        shortcut.register("alt+e", () => {
-          setToggle(`MODAL_EXPORT_${toggleKey}`)
-        }, "Export Data Ke Excel")
+        shortcut.register("enter", () => {
+          setSelected(data?.data?.at(focus))
+          setToggle(`MODAL_SHOW_${toggleKey}`)
+        }, "Detail data yang dipilih")
+
+        shortcut.register("escape", () => {
+          setFocus(null)
+        }, "Kembali")
       }
     }
 
     return () => {
-      if(!isSm) {
-        shortcut.unregister("alt+n")
-        shortcut.unregister("alt+i")
-        shortcut.unregister("alt+e")
-      }
+      shortcut.unregister("arrowdown")
+      shortcut.unregister("arrowup")
+      shortcut.unregister("delete")
+      shortcut.unregister(" ")
+      shortcut.unregister("enter")
+      shortcut.unregister("escape")
     }
-  }, [controlBar, isSm])
+  }, [data?.data, actionControl, focus, toggle[`MODAL_DELETE_${toggleKey}`], toggle[`MODAL_DELETE_${toggleKey}`], toggle[`MODAL_SHOW_${toggleKey}`]])
+  
 
-
-  useEffect(() => {
-    if(actionControl && Array.isArray(actionControl) && selected) {
-      actionControl.filter((ac) => typeof ac == "object")?.forEach((ac) => {
-        if(typeof ac == "object" && ac?.shortcut) {
-          shortcut.register(ac.shortcut.key, () => {
-            setToggle(`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`)
-          }, ac.shortcut.description)
-        }
-      })
-    }
-
-    return () => {
-      if(actionControl && Array.isArray(actionControl)) {
-        actionControl.filter((ac) => typeof ac == "object")?.forEach((ac) => {
-          if(typeof ac == "object" && ac?.shortcut) {
-            shortcut.unregister(ac.shortcut.key)
-          }
-        })
-      }
-    }
-  }, [actionControl, selected])
-
-
-
-  const columns: TableSupervisionColumnProps[] = useMemo(() => {
-    return columnControl ? columnControl.map((col) => {
-      if(typeof col == "string") {
+  // ============================
+  // ## Column preparation
+  // ============================
+  const columns = useMemo(() => {
+    return columnControl?.length ? columnControl.map((col) => {
+      if (typeof col === "string") {
         return {
           selector  :  col,
           label     :  col,
@@ -221,14 +183,14 @@ export function TableSupervisionComponent({
   ) => {
     return (
       <>
-        <div className={cn("table-supervision-action-list", options?.className)}>
+        <div className={cn("flex items-center gap-2", options?.className)}>
           {(Array.isArray(actions) ? actions : (actions || actions == undefined) ? ['EDIT', "DELETE"] : [])?.map((action, key) => {
             if(action == "EDIT") {
               return (
                 <ButtonComponent
                   key={key}
-                  icon={faEdit}
-                  label={"Ubah"}
+                  icon={"solid/edit"}
+                  label={l.base.edit ? l.base.edit() : "Edit"}
                   variant="outline"
                   paint="warning"
                   size={options?.size || "xs"}
@@ -245,8 +207,8 @@ export function TableSupervisionComponent({
               return (
                 <ButtonComponent
                   key={key}
-                  icon={faTrash}
-                  label={"Hapus"}
+                  icon={"solid/trash"}
+                  label={l.base.delete ? l.base.delete() : "Delete"}
                   variant="outline"
                   paint="danger"
                   size={options?.size || "xs"}
@@ -259,38 +221,45 @@ export function TableSupervisionComponent({
               )
             }
 
-            if (typeof action == "object") {
-              return (
-                <ButtonComponent
-                  key={key}
-                  label={action.label}
-                  variant="outline"
-                  paint="primary"
-                  size={options?.size || "xs"}
-                  rounded
-                  onClick={() => {
-                    setToggle(`MODAL_${conversion.strSnake(action.label).toUpperCase()}_${toggleKey}`);
+            if(typeof action == "object") {
+              <ButtonComponent
+                key={`action-object-${key}`}
+                label={action?.button?.label || action?.label}
+                variant={action?.button?.variant || "outline"}
+                paint={action?.button?.paint || "primary"}
+                size={action?.button?.size || options?.size || "xs"}
+                rounded={action?.button?.rounded || true}
+                onClick={() => {
+                  if (action?.button?.onClick) {
+                    action?.button?.onClick(item)
+                  } else {
+                    setToggle(`MODAL_${conversion.strSnake(action?.label).toUpperCase()}_${toggleKey}`);
                     item && setSelected?.(item);
-                  }}
-                  {...action.button}
-                />
-              )
+                  }
+                }}
+                {...action.button}
+              />
             }
 
-            if (typeof action == "function") {
+            if(typeof action == "function") {
               return (
-                <div key={key}>
-                  {action(
-                    item || {}, 
-                    (type) => {
-                      setToggle(`MODAL_${type}_${toggleKey}`)
-                      item && setSelected?.(item)
-                    },
-                    () => item && setSelected?.(item)
-                  )}
-                </div>
+                <span key={`action-fn-${key}`}>
+                  {action(item || {}, (type: "EDIT" | "DELETE") => {
+                    if(type == "EDIT") {
+                      setToggle(`MODAL_FORM_${toggleKey}`);
+                      item && setSelected?.(item);
+                    } 
+                    
+                    if (type == "DELETE") {
+                      setToggle(`MODAL_DELETE_${toggleKey}`);
+                      item && setSelected?.(item);
+                    }
+                  }, () => item && setSelected?.(item), () => {}, options?.size)}
+                </span>
               )
             }
+            
+            return <span key={`action-default-${key}`}></span>;
           })}
         </div>
       </>
@@ -298,37 +267,46 @@ export function TableSupervisionComponent({
   }
 
 
+  // ============================
+  // ## Data table preparation
+  // ============================
+  const dataTables = useMemo(() => {
+    return data?.data?.map((row: object) => {
+      return {
+        ...row,
+        action: renderTableAction(actionControl, row),
+      };
+    });
+  }, [actionControl, data]);
 
 
   // ============================
   // ## Render detail page 
   // ============================
   const detailPage = useMemo(() => {
-    if (detailContent === false || detailContent === undefined) return null;
+    if (!toggle[`MODAL_SHOW_${toggleKey}`]) return null;
     return (
-      <div className="table-supervision-detail-container">
-        <div className="table-supervision-detail-body">
-          {!!selected && (typeof detailContent === "object" && Array.isArray(detailContent) ? detailContent?.map((column, key) => {
+      <div className="p-4">
+        <div className={cn(
+          "flex flex-col gap-y-4", 
+        )}>
+          {!!selected && (typeof detailControl === "object" && detailControl?.length ? detailControl?.map((column, key) => {
             if (typeof column === "string") {
               return (<TypographyColumnComponent
                 key={key}
                 title={columns?.find((c) => c.selector == column)?.label} 
                 content={selected[column]}
               />)
-            } else if (typeof column === "object" && column !== null) {
-              const colObj = column as { label: string, item: string | ((data: Record<string, any>) => ReactNode), conversion?: keyof typeof conversion };
-              const rawContent = typeof colObj.item === "string" ? selected[colObj.item] : colObj.item(selected);
-              const conversionKey = colObj.conversion;
-              const content = conversionKey && conversion[conversionKey] ? (conversion[conversionKey] as any)(rawContent) : rawContent;
+            } else if (typeof column === "object") {
               return (<TypographyColumnComponent
                 key={key}
-                title={colObj.label} 
-                content={content}
+                title={column?.label} 
+                content={typeof column?.item === "string" ? selected[column?.item] : column?.item(selected)}
               />)
             } else {
               return column?.(selected)
             }
-          }) : typeof detailContent === "function" ? (detailContent as any)(selected) : columns?.map((column, key) => (
+          }) : typeof detailControl == "function" ?  detailControl(selected) : columns?.map((column, key) => (
             <TypographyColumnComponent
               key={key}
               title={column.label} 
@@ -338,7 +316,7 @@ export function TableSupervisionComponent({
         </div>
       </div>
     )
-  }, [selected, detailContent, columns]);
+  }, [selected, detailControl]);
 
 
 
@@ -349,43 +327,64 @@ export function TableSupervisionComponent({
   const fields = useMemo(() => {
     return formControl?.fields?.length ? formControl?.fields.map((form) => {
       return typeof form === "string" ? {
-        label      :  form,
-        name       :  conversion.strSnake(form),
-        type       : "text",
-        visibility : "*"
-      } : {
-        ...form,
-        visibility : form.visibility || "*"
-      }
-    }) as FormType[] : []
-  }, [formControl]);
+        col           :  12,
+        type          :  "text",
+        construction  :  {
+          name   :  form,
+          label  :  form,
+        },
+      } : { ...form };
+    }) : data?.forms || data?.columns || columnControl?.map((col) => {
+      return {
+        col           :  12,
+        type          :  "text",
+        construction  :  {
+          name         :  typeof col == "string" ? col                                 :  col?.selector,
+          label        :  typeof col == "string" ? col                                 :  col?.label,
+          placeholder  :  `Masukkan ${ typeof col == "string" ? col : col?.label}...`,
+        },
+      };
+    }) || (data?.data?.at(0) ? Object.keys(data.data[0]).map((col) => {
+        return {
+          col           :  12,
+          type          :  "text",
+          construction  :  {
+            name         :  col,
+            label        :  col,
+            placeholder  :  `Masukkan ${col}...`,
+          },
+        };
+      })
+    : []);
+  }, [formControl, data]);
 
 
 
-  const formPage = useMemo(() => {
+  // ============================
+  // ## Render form page 
+  // ============================
+  const formPage = useMemo(async () => {
     return (
-      <FormSupervisionComponent 
-        fields={fields}
-        defaultValue={formControl?.defaultValue}
+      <FormSupervisionComponent
+        submitControl={(fetchControl as ApiType).path ? { 
+            path: `${(fetchControl as ApiType).path}/${(selected as { id: number })?.id || "" }`,
+            method: !(selected as { id: number })?.id ? "POST" : "PUT", 
+          } : (fetchControl as ApiType).url ? { 
+            url: `${(fetchControl as ApiType).url}/${(selected as { id: number })?.id || ""}`,
+            method: !(selected as { id: number })?.id ? "POST" : "PUT", 
+          } : { idb: (fetchControl as ({ idb: UseResourceIdb }))?.idb }
+        }
+        fields={fields?.filter((f: any) => f.visibility ? !(selected as { id: number })?.id ? ["*", "create"]?.includes(f.visibility) : ["*", "update"]?.includes(f.visibility) : true) as FormType[]}
+        defaultValue={formControl?.defaultValue ? await formControl?.defaultValue(selected || null) : selected}
         payload={formControl?.payload}
-        submitControl={fetchControl}
         onSuccess={() => {
-          setToggle(`MODAL_FORM_${toggleKey}`, false)
-          reset()
+          reset();
+          setTimeout(() => { setToggle(`MODAL_FORM_${toggleKey}`, false) }, 900);
         }}
       />
     )
-  }, [selected, fields])
+  }, [selected, fetchControl, formControl]);
 
-
-  const dataTables = useMemo(() => {
-    return data?.data?.map((item: Record<string, any>) => {
-      return {
-        ...item,
-        action: renderTableAction(actionControl, item)
-      };
-    }) || [];
-  }, [actionControl, data]);
 
 
   useEffect(() => {
@@ -395,131 +394,131 @@ export function TableSupervisionComponent({
 
   return (
     <>
-      <Suspense fallback={<div>Loading...</div>}>
-        {title && <h1 className="table-supervision-title">{title}</h1>}
-      
+      {title && <h1 className="text-lg lg:text-xl font-bold mb-2 lg:mb-4">{title}</h1>}
 
-        <TableComponent
-          id={tableKey}
-          controlBar={controlBar?.map((cb) => {
-              if (cb == "CREATE") {
-                if (isSm) return 
-                return (
-                  <div className="control-bar-create-wrapper" key="button-add">
-                    <ButtonComponent
-                      icon={faPlus}
-                      label="Tambah Data"
-                      size="sm"
-                      onClick={() => {
-                        setToggle(`MODAL_FORM_${toggleKey}`)
-                        setSelected(null)
-                      }}
-                    />
-                  </div>
-                )
+      <TableComponent
+        id={tableKey}
+        controlBar={controlBar?.map((cb) => {
+            if (cb == "CREATE") {
+              if (isSm) return 
+              return (
+                <div className="pl-1.5 pr-3 mr-2 border-r" key="button-add">
+                  <ButtonComponent
+                    icon={"solid/plus"}
+                    label="Tambah Data"
+                    size="sm"
+                    onClick={() => {
+                      setToggle(`MODAL_FORM_${toggleKey}`)
+                      setSelected(null)
+                    }}
+                  />
+                </div>
+              )
+            }
+
+            if (cb == "IMPORT") {
+              return (
+                <div className="px-1.5 rounded-md relative" key={"import"}>
+                  <ButtonComponent
+                    icon={"solid/file-excel"}
+                    label="Import"
+                    variant="outline"
+                    className="!text-foreground"
+                    onClick={() => setToggle(`MODAL_IMPORT_${toggleKey}`)}
+                    size="sm"
+                  />
+                </div>
+              )
+            }
+
+            if (cb == "EXPORT") {
+              return (
+                <div className="px-1.5 rounded-md relative" key={"export-excel"}>
+                  <ButtonComponent
+                    icon={"solid/file-excel"}
+                    label="Export"
+                    variant="outline"
+                    className="!text-foreground"
+                    onClick={() => setToggle(`MODAL_EXPORT_${toggleKey}`)}
+                    size="sm"
+                  />
+                </div>
+              )
+            }
+
+            if (cb == "PRINT") {
+              return (
+                <div className="px-1.5 rounded-md relative" key={"export-pdf"}>
+                  <ButtonComponent
+                    icon={"solid/file-pdf"}
+                    label="Cetak"
+                    variant="outline"
+                    className="!text-foreground"
+                    onClick={() => setToggle(`MODAL_PRINT_${toggleKey}`)}
+                    size="sm"
+                  />
+                </div>
+              )
+            }
+
+            return cb
+          }) || [
+          ...(!isSm ? [
+            <div className="pl-1.5 pr-3 mr-2 border-r" key="button-add">
+              <ButtonComponent
+                icon={"solid/plus"}
+                label="Tambah Data"
+                size="sm"
+                onClick={() => {
+                  setToggle(`MODAL_FORM_${toggleKey}`)
+                  setSelected(null)
+                }}
+              />
+            </div>
+          ] : []), 
+          "SEARCH", 
+          ...(columns?.filter((c) => !!(c as { filterable?: any }).filterable)?.length ? ["FILTER"] : []),
+          ...(columns?.filter((c) => !!(c as { sortable?: any }).sortable)?.length ? ["SORT"] : []),
+          "SELECTABLE", "REFRESH",
+        ]}
+        columns={columns as TableColumnType[]}
+        data={dataTables}
+        onRowClick={onRowClick ? onRowClick : detailControl != false ? (e) => {
+          setToggle(`MODAL_SHOW_${toggleKey}`)
+          setSelected(e)
+        } : undefined}
+        actionBulking={actionBulkingControl}
+        checks={checks || []}
+        onChangeChecks={(e) => setChecks(e)}
+        block={block}
+        focus={focus}
+        noIndex={noIndex}
+        responsiveControl={responsiveControl ? {
+          mobile: responsiveControl?.mobile ? {
+            ...(typeof responsiveControl.mobile === 'object' ? responsiveControl.mobile : {}),
+            leftActionControl: (typeof responsiveControl.mobile === 'object' && responsiveControl.mobile.leftActionControl !== undefined) ? responsiveControl.mobile.leftActionControl : (Array.isArray(actionControl) ? actionControl : (actionControl || actionControl == undefined) ? ['EDIT', "DELETE"] : []).includes('EDIT') ? {
+              icon: "solid/edit",
+              onAction: (item) => {
+                setToggle(`MODAL_FORM_${toggleKey}`);
+                item && setSelected?.(item);
               }
-
-              if (cb == "IMPORT") {
-                return (
-                  <div className="control-bar-button-wrapper" key={"import"}>
-                    <ButtonComponent
-                      icon={faFileExcel}
-                      label="Import"
-                      variant="outline"
-                      className="table-supervision-control-button"
-                      onClick={() => setToggle(`MODAL_IMPORT_${toggleKey}`)}
-                      size="sm"
-                    />
-                  </div>
-                )
+            } : undefined,
+            rightActionControl: (typeof responsiveControl.mobile === 'object' && responsiveControl.mobile.rightActionControl !== undefined) ? responsiveControl.mobile.rightActionControl : (Array.isArray(actionControl) ? actionControl : (actionControl || actionControl == undefined) ? ['EDIT', "DELETE"] : []).includes('DELETE') ? {
+              icon: "solid/trash",
+              onAction: (item) => {
+                setToggle(`MODAL_DELETE_${toggleKey}`);
+                item && setSelected?.(item);
               }
+            } : undefined
+          } : undefined,
+        } : undefined}
+        {...tableControl}
+      />
 
-              if (cb == "EXPORT") {
-                return (
-                  <div className="control-bar-button-wrapper" key={"export-excel"}>
-                    <ButtonComponent
-                      icon={faFileExcel}
-                      label="Export"
-                      variant="outline"
-                      className="table-supervision-control-button"
-                      onClick={() => setToggle(`MODAL_EXPORT_${toggleKey}`)}
-                      size="sm"
-                    />
-                  </div>
-                )
-              }
-
-              if (cb == "PRINT") {
-                return (
-                  <div className="control-bar-button-wrapper" key={"export-pdf"}>
-                    <ButtonComponent
-                      icon={faFilePdf}
-                      label="Cetak"
-                      variant="outline"
-                      className="table-supervision-control-button"
-                      onClick={() => setToggle(`MODAL_PRINT_${toggleKey}`)}
-                      size="sm"
-                    />
-                  </div>
-                )
-              }
-
-              return cb
-            }) || [
-            ...(!isSm ? [
-              <div className="control-bar-create-wrapper" key="button-add">
-                <ButtonComponent
-                  icon={faPlus}
-                  label="Tambah Data"
-                  size="sm"
-                  onClick={() => {
-                    setToggle(`MODAL_FORM_${toggleKey}`)
-                    setSelected(null)
-                  }}
-                />
-              </div>
-            ] : []), 
-            "SEARCH", 
-            ...(columns?.filter((c) => !!(c as { filterable?: any }).filterable)?.length ? ["FILTER"] : []),
-            ...(columns?.filter((c) => !!(c as { sortable?: any }).sortable)?.length ? ["SORT"] : []),
-            "SELECTABLE", "REFRESH",
-          ]}
-          columns={columns as TableColumnType[]}
-          data={dataTables}
-          onRowClick={detailAction ? detailAction : (detailContent !== false && detailContent !== undefined) ? (e) => {
-            setToggle(`MODAL_SHOW_${toggleKey}`)
-            setSelected(e)
-          } : undefined}
-          actionBulking={actionBulkingControl}
-          checks={checks || []}
-          onChangeChecks={(e) => setChecks(e)}
-          block={block}
-          focus={focus}
-          noIndex={noIndex}
-          responsiveControl={responsiveControl ? {
-            mobile: responsiveControl?.mobile == true ? {
-              leftActionControl: (Array.isArray(actionControl) ? actionControl : (actionControl || actionControl == undefined) ? ['EDIT', "DELETE"] : []).includes('EDIT') ? {
-                icon: faEdit,
-                onAction: (item) => {
-                  setToggle(`MODAL_FORM_${toggleKey}`);
-                  item && setSelected?.(item);
-                }
-              } : undefined,
-              rightActionControl: (Array.isArray(actionControl) ? actionControl : (actionControl || actionControl == undefined) ? ['EDIT', "DELETE"] : []).includes('DELETE') ? {
-                icon: faTrash,
-                onAction: (item) => {
-                  setToggle(`MODAL_DELETE_${toggleKey}`);
-                  item && setSelected?.(item);
-                }
-              } : undefined
-            } : responsiveControl?.mobile || undefined,
-          } : undefined}
-          {...tableControl}
-        />
-
+      {controlBar?.find((cb) => cb == "CREATE") && (
         <ButtonComponent
-          icon={faPlus}
-          className="table-supervision-mobile-add-btn"
+          icon={"solid/plus"}
+          className="fixed bottom-24 right-4 w-14 h-14 z-20 md:hidden"
           size="lg"
           rounded
           onClick={() => {
@@ -527,162 +526,128 @@ export function TableSupervisionComponent({
             setSelected(null)
           }}
         />
+      )}
 
 
-        {(detailContent !== false && detailContent !== undefined) && (isSm ? (
-          <BottomSheetComponent
-            show={!!toggle[`MODAL_SHOW_${toggleKey}`]}
-            onClose={() => setToggle(`MODAL_SHOW_${toggleKey}`, false)}
-            className="table-supervision-modal"
-            footer={renderTableAction(actionControl, undefined, {className: isSm ? "justify-end p-2 bg-background" : "justify-end", size: isSm ? "sm" : "md"})}
-            size="98vh"
-            {...(detailModalProps as any)}
-          >
-            {detailPage}
-          </BottomSheetComponent>
-        ) : (
-          <FloatingPageComponent
-            show={!!toggle[`MODAL_SHOW_${toggleKey}`]}
-            onClose={() => setToggle(`MODAL_SHOW_${toggleKey}`, false)}
-            title="Detail"
-            className="table-supervision-modal"
-            footer={renderTableAction(actionControl, undefined, {className: isSm ? "justify-end p-2 bg-background" : "justify-end", size: isSm ? "sm" : "md"})}
-            {...(detailModalProps as any)}
-          >
-            {detailPage}
-          </FloatingPageComponent>
-        ))}
+      <FloatingPageComponent
+        show={!!toggle[`MODAL_SHOW_${toggleKey}`]}
+        onClose={() => setToggle(`MODAL_SHOW_${toggleKey}`, false)}
+        title="Detail"
+        className="bg-background"
+        footer={renderTableAction(actionControl, undefined, {className: isSm ? "justify-end p-2 bg-background" : "justify-end", size: isSm ? "sm" : "md"})}
+      >
+        {detailPage}
+      </FloatingPageComponent>
 
 
-        {isSm ? (
-          <BottomSheetComponent
-            show={!!toggle[`MODAL_FORM_${toggleKey}`]}
-            onClose={() => setToggle(`MODAL_FORM_${toggleKey}`, false)}
-            className={cn("table-supervision-modal", formControl?.modalControl?.className)}
-            size="98vh"
-          >
-            <div className="table-supervision-form-mobile-container">
-              {formPage}
-            </div>
-          </BottomSheetComponent>
-        ) : (
-          <FloatingPageComponent
-            show={!!toggle[`MODAL_FORM_${toggleKey}`]}
-            onClose={() => setToggle(`MODAL_FORM_${toggleKey}`, false)}
-            title={!!selected ? "Ubah Data" : "Tambah Data"}
-            className={cn("table-supervision-modal", formControl?.modalControl?.className)}
-          >
-            <div className="table-supervision-form-container">
-              {formPage}
-            </div>
-          </FloatingPageComponent>
-        )}
+      <FloatingPageComponent
+        show={!!toggle[`MODAL_FORM_${toggleKey}`]}
+        onClose={() => setToggle(`MODAL_FORM_${toggleKey}`, false)}
+        title={!!selected ? "Ubah Data" : "Tambah Data"}
+        className={cn("bg-white", formControl?.modalControl?.className)}
+      >
+        <div className="p-4">
+          {formPage}
+        </div>
+      </FloatingPageComponent>
 
 
-        {ExportExcel && (
-          <FloatingPageComponent
-            show={!!toggle[`MODAL_EXPORT_${toggleKey}`]}
-            onClose={() => setToggle(`MODAL_EXPORT_${toggleKey}`, false)}
-            title="Export Ke Excel"
-            className="table-supervision-large-modal"
-          >
-            <ExportExcel 
-              fetchControl={fetchControl as FetchControlType} 
-              filename={"Export - " + title}
-              columnControl={columns?.map((cc: TableSupervisionColumnProps) => ({
-                label: cc.label || "",
-                selector: cc.selector || "",
-                status: cc.exportable === false ? "hidden" : cc.exportable === true ? "default" : typeof cc.exportable === "string" ? cc.exportable : undefined,
-              }))} 
-            />
-          </FloatingPageComponent>
-        )}
+      <FloatingPageComponent
+        show={!!toggle[`MODAL_EXPORT_${toggleKey}`]}
+        onClose={() => setToggle(`MODAL_EXPORT_${toggleKey}`, false)}
+        title="Export Ke Excel"
+        className="bg-white md:w-[1200px] max-w-[1200px]"
+      >
+        <ExportExcel 
+          fetchControl={fetchControl} 
+          filename={"Export - " + title}
+          columnControl={columns?.map((cc) => ({
+            label: cc.label || "",
+            selector: cc.selector || "",
+          }))} 
+        />
+      </FloatingPageComponent>
 
 
-        {ImportExcel && (
-          <FloatingPageComponent
-            show={!!toggle[`MODAL_IMPORT_${toggleKey}`]}
-            onClose={() => setToggle(`MODAL_IMPORT_${toggleKey}`, false)}
-            title="Import Dari Excel"
-            className="table-supervision-large-modal"
-          >
-            <ImportExcel 
-              submitControl={importControl}
-              fetchControl={
-                (fetchControl as ApiType).path ? {
-                  path: (fetchControl as ApiType).path,
-                } : undefined
-              }
-              columnControl={columns?.filter((cc: TableSupervisionColumnProps) => cc.importable !== false).map((cc: TableSupervisionColumnProps) => ({
-                label: cc.label || "",
-                selector: cc.selector || "",
-              }))} 
-            />
-          </FloatingPageComponent>
-        )}
+      <FloatingPageComponent
+        show={!!toggle[`MODAL_IMPORT_${toggleKey}`]}
+        onClose={() => setToggle(`MODAL_IMPORT_${toggleKey}`, false)}
+        title="Import Dari Excel"
+        className="bg-white md:w-[1200px] max-w-[1200px]"
+      >
+        <ImportExcel 
+          submitControl={{ path: (fetchControl as ApiType)?.path + "/import" }}
+          columnControl={columns?.map((cc) => ({
+            label: cc.label || "",
+            selector: cc.selector || "",
+          }))} 
+        />
+      </FloatingPageComponent>
 
 
-        <ModalConfirmComponent
-          show={!!toggle[`MODAL_DELETE_${toggleKey}`]}
-          onClose={() => setToggle(`MODAL_DELETE_${toggleKey}`, false)}
-          icon={faQuestionCircle}
-          title={`Menghapus Data?`}
-          submitControl={{
-            onSubmit: {
-              ...((fetchControl as ApiType).path 
-                ? {path: `${(fetchControl as ApiType).path}/${(selected as { id: number })?.id || ""}`} 
-                : (fetchControl as ApiType).url ? {url: `${(fetchControl as ApiType).url}/${(selected as { id: number })?.id || ""}`}
-                : { idb: { ...(fetchControl as ({ idb: UseResourceIdb }))?.idb, id: (selected as { id: number })?.id || "" }}
-              ),
-              method: "DELETE",
-            },
-            onSuccess: () => {
-              reset();
-              setToggle(`MODAL_DELETE_${toggleKey}`, false);
-            },
-          }}
-        >
-          {columns?.at(0)?.selector && selected ? (
-            <p className="table-supervision-confirm-text">Yakin menghapus <span className="table-supervision-confirm-item-name">&quot;{selected[columns?.at(0)?.selector || ""]}&quot;</span>?</p>
-          ) : (
-            <p className="table-supervision-confirm-text">Yakin yang dihapus sudah benar?</p>
-          )}
-        </ModalConfirmComponent>
+      {/* <FloatingPageComponent
+        show={!!toggle[`MODAL_PRINT_${toggleKey}`]}
+        onClose={() => setToggle(`MODAL_PRINT_${toggleKey}`, false)}
+        title="Print PDF"
+        className="bg-white md:w-[1200px] max-w-[1200px]"
+      >
+        <PrintTable 
+          fetchControl={fetchControl} 
+          columnControl={columns?.map((cc) => ({
+            label: cc.label || "",
+            selector: cc.selector || "",
+          }))} 
+          title={"Print - " + title}
+        />
+      </FloatingPageComponent> */}
 
-        {actionControl && Array.isArray(actionControl) && actionControl.filter((ac) => typeof ac == "object")?.map((ac, acKey) => {
-          const submitControl = ac.modal?.submitControl?.onSubmit as ApiType;
-          return (
-            <ModalConfirmComponent
-              key={acKey}
-              show={!!toggle[`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`]}
-              onClose={() => setToggle(`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`, false)}
-              icon={faQuestionCircle}
-              title={`${ac.label} Data?`}
-              submitControl={{
-                onSubmit: {
-                  ...((submitControl as ApiType)?.path 
-                    ? {path: `${(submitControl as ApiType).path}/${(selected as { id: number })?.id || ""}`} 
-                    : (submitControl as ApiType)?.url ? {url: `${(submitControl as ApiType).url}/${(selected as { id: number })?.id || ""}`}
-                    : { idb: { ...(submitControl as ({ idb: UseResourceIdb }))?.idb, id: (selected as { id: number })?.id || "" }}
-                  ),
-                  ...ac.modal?.submitControl?.onSubmit,
-                },
-                onSuccess: () => {
-                  reset();
-                  setToggle(`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`, false);
-                },
-              }}
-              {...ac.modal}
-            >
-              {columns?.at(0)?.selector && selected ? (
-                <p className="table-supervision-confirm-text">Yakin melakukan aksi untuk data <span className="table-supervision-confirm-item-name">&quot;{selected[columns?.at(0)?.selector || ""]}&quot;</span>?</p>
-              ) : (
-                <p className="table-supervision-confirm-text">Yakin aksi yang dilakukan sudah benar?</p>
-              )}
-            </ModalConfirmComponent>
-          )
-        })}
-      </Suspense>
+
+      <ModalConfirmComponent
+        show={!!toggle[`MODAL_DELETE_${toggleKey}`]}
+        onClose={() => setToggle(`MODAL_DELETE_${toggleKey}`, false)}
+        title={<>Menghapus Data <span className="font-semibold">&quot;{selected?.[columns?.at(0)?.selector || ""]}&quot;</span> ?</>}
+        submitControl={{
+          onSubmit: {
+            ...((fetchControl as ApiType).path 
+              ? {path: `${(fetchControl as ApiType).path}/${(selected as { id: number })?.id || ""}`} 
+              : (fetchControl as ApiType).url ? {url: `${(fetchControl as ApiType).url}/${(selected as { id: number })?.id || ""}`}
+              : { idb: { ...(fetchControl as ({ idb: UseResourceIdb }))?.idb, id: (selected as { id: number })?.id || "" }}
+            ),
+            method: "DELETE",
+          },
+          onSuccess: () => {
+            reset();
+            setTimeout(() => { setToggle(`MODAL_DELETE_${toggleKey}`, false) }, 900);
+          },
+        }}
+      />
+
+      {actionControl && Array.isArray(actionControl) && actionControl.filter((ac) => typeof ac == "object")?.map((ac, acKey) => {
+        const submitControl = ac.modal?.submitControl?.onSubmit as ApiType;
+        return (
+          <ModalConfirmComponent
+            key={acKey}
+            show={!!toggle[`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`]}
+            onClose={() => setToggle(`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`, false)}
+            title={ac?.modal?.title || ac.label}
+            submitControl={{
+              onSubmit: {
+                ...(submitControl?.path 
+                  ? {path: `${submitControl?.path}/${(selected as { id: number })?.id || ""}`} 
+                  : {url: `${submitControl?.url}/${(selected as { id: number })?.id || ""}`}
+                ),
+                method: submitControl?.method || "POST",
+              },
+              onSuccess: () => {
+                reset();
+                setToggle(`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${conversion.strSnake(tableKey).toUpperCase()}`, false);
+                setSelected(null)
+                ac.modal?.submitControl?.onSuccess?.()
+              },
+            }}
+          >{ac.modal?.children}</ModalConfirmComponent>
+        )
+      })}
     </>
   );
 }

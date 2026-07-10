@@ -1,9 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFacebook, faGithub, faInstagram, faLinkedin } from "@fortawesome/free-brands-svg-icons";
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 export interface FooterLinkProps {
   label: string;
@@ -16,7 +15,7 @@ export interface FooterColumnProps {
 }
 
 export interface FooterSocialProps {
-  icon: IconDefinition;
+  icon: IconName;
   path: string;
 }
 
@@ -33,10 +32,10 @@ export interface FooterProps {
 }
 
 const defaultSocials: FooterSocialProps[] = [
-  { icon: faFacebook as any, path: "" },
-  { icon: faLinkedin as any, path: "" },
-  { icon: faGithub as any, path: "https://github.com/SE-JE" },
-  { icon: faInstagram as any, path: "https://www.instagram.com/seje.digital/" },
+  { icon: "brands/facebook" as any, path: "" },
+  { icon: "brands/linkedin" as any, path: "" },
+  { icon: "brands/github" as any, path: "https://github.com/SE-JE" },
+  { icon: "brands/instagram" as any, path: "https://www.instagram.com/seje.digital/" },
 ];
 
 const defaultColumns: FooterColumnProps[] = [
@@ -131,7 +130,7 @@ export function FooterComponent({
             <div className="footer-socials-container">
               {socials.map((social, key) => (
                 <a href={social.path} key={key} target="_blank" rel="noopener noreferrer">
-                  <FontAwesomeIcon
+                  <Icon
                     icon={social.icon}
                     className="footer-social-icon"
                   />

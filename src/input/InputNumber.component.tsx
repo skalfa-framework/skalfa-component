@@ -1,8 +1,7 @@
 "use client"
 
 import React, { InputHTMLAttributes, ReactNode } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSortDown, faSortUp } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useValidation, validation, ValidationRules } from "@utils";
 
 
@@ -144,7 +143,7 @@ export function InputNumberComponent({
           />
 
           {leftIcon && (
-            <FontAwesomeIcon
+            <Icon
               className={cn(
                 "input-icon",
                 "input-icon-left",
@@ -171,14 +170,14 @@ export function InputNumberComponent({
             )}
           >
             <div className="input-number-sort-container">
-              <FontAwesomeIcon
+              <Icon
                 className="input-number-sort-up"
-                icon={faSortUp}
+                icon="solid/chevron-up"
                 onClick={() => inputHandler.setValue(String(Number(inputHandler.value) + 1))}
               />
-              <FontAwesomeIcon
+              <Icon
                 className="input-number-sort-down"
-                icon={faSortDown}
+                icon="solid/chevron-down"
                 onClick={() => inputHandler.setValue(String(Number(inputHandler.value) - 1))}
               />
             </div>

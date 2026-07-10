@@ -19,11 +19,11 @@
         "./node_modules/@skalfa/skalfa-app-core/dist/index.d.ts"
       ],
       "@utils": [
-        "../skalfa-app-core/dist/index.d.ts",
+        "../skalfa-app-core/src",
         "./node_modules/@skalfa/skalfa-app-core/dist/index.d.ts"
       ],
       "@utils/*": [
-        "../skalfa-app-core/dist/*",
+        "../skalfa-app-core/src/*",
         "./node_modules/@skalfa/skalfa-app-core/dist/*"
       ],
       "@components": ["./src/index.ts"],
@@ -42,5 +42,5 @@
       ]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src/.supervision"]
 }

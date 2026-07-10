@@ -1,5 +1,4 @@
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
 import { cn } from "@utils";
 
 export function ChipComponent({ 
@@ -25,8 +24,8 @@ export function ChipComponent({
             <span>{item}</span>
             
             {onDelete && (
-              <FontAwesomeIcon
-                icon={faTimes}
+              <Icon
+                icon="solid/times"
                 className="chip-delete"
                 onClick={() =>  onDelete?.(item, key)}
               />

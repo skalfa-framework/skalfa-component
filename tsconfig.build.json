@@ -1,0 +1,40 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "react": [
+        "../skalfa-app/node_modules/react",
+        "./node_modules/react"
+      ],
+      "@types/react": [
+        "../skalfa-app/node_modules/@types/react",
+        "./node_modules/@types/react"
+      ],
+      "@types/react-dom": [
+        "../skalfa-app/node_modules/@types/react-dom",
+        "./node_modules/@types/react-dom"
+      ],
+      "@components": [
+        "./src/index.ts"
+      ],
+      "@components/*": [
+        "./src/*"
+      ],
+      "@skalfa/skalfa-app-core": [
+        "../skalfa-app-core/dist/index.d.ts"
+      ],
+      "@utils": [
+        "../skalfa-app-core/dist/index.d.ts"
+      ],
+      "@utils/*": [
+        "../skalfa-app-core/dist/*"
+      ],
+      "@skalfa/skalfa-icon": [
+        "../skalfa-icon/dist/index.d.ts"
+      ],
+      "@skalfa/skalfa-icon/*": [
+        "../skalfa-icon/dist/*"
+      ]
+    }
+  }
+}

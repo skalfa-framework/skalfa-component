@@ -2,7 +2,7 @@
 
 import { ReactNode, useRef, useState } from 'react'
 import { cn } from '@utils';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Icon } from '@skalfa/skalfa-icon';
 
 
 export type SwipeActionType = {
@@ -84,7 +84,7 @@ export function SwipeComponent({
           offset > 0 ? "opacity-100" : "opacity-0"
         )}
       >
-        {leftActionControl?.icon && <FontAwesomeIcon icon={leftActionControl?.icon} />} {leftActionControl?.label}
+        {leftActionControl?.icon && <Icon icon={leftActionControl?.icon} />} {leftActionControl?.label}
       </div>
 
       <div 
@@ -95,7 +95,7 @@ export function SwipeComponent({
           offset < 0 ? "opacity-100" : "opacity-0"
         )}
       >
-        {rightActionControl?.icon && <FontAwesomeIcon icon={rightActionControl?.icon} />} {rightActionControl?.label}
+        {rightActionControl?.icon && <Icon icon={rightActionControl?.icon} />} {rightActionControl?.label}
       </div>
 
       <div

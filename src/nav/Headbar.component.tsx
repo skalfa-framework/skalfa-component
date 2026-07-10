@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 import { ReactNode } from "react";
 
 
@@ -22,7 +22,7 @@ export function HeadbarComponent({ title, backHref, rightContent }: HeadbarProps
       <div className="flex items-center">
         {backHref && (
           <div className="w-8 aspect-square flex justify-center items-center cursor-pointer" onClick={() => typeof backHref != "boolean" ? router.push(backHref) : router.back()}>
-            <FontAwesomeIcon icon={faChevronLeft} className="text-secondary text-xl" />
+            <Icon icon="solid/chevron-left" className="text-secondary text-xl" />
           </div>
         )}
         <p className="text-lg font-bold px-2">{title}</p>

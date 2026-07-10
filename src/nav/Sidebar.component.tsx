@@ -1,11 +1,11 @@
 "use client"
 
-import { Fragment, ReactNode, useEffect, useState } from "react";
+import { Fragment, ReactNode, useEffect, useState, } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn } from "@utils";
+import { useToggleContext } from "@contexts";
+import { Icon } from "@skalfa/skalfa-icon";
 
 
 
@@ -29,15 +29,11 @@ export interface SidebarHeadItemProps {
 };
 
 export interface sidebarProps {
-  head            ?:  any;
-  items           ?:  SidebarHeadItemProps[];
-  basePath        ?:  string;
-  show            ?:  boolean;
-  toggle          ?:  boolean;
-  onToggleChange  ?:  () => void;
-  children        ?:  any;
-  hasAccess       ?:  number[];
-  onChange        ?:  () => void;
+  id        ?:  string;
+  head      ?:  any;
+  footer    ?:  any;
+  items     ?:  SidebarHeadItemProps[];
+  basePath  ?:  string;
 
   /** Use custom class with: "backdrop::", "head-item::", "item::", "child-item::". */
   className?: string;
@@ -67,25 +63,20 @@ function SidebarWrapper({
 
 
 export function SidebarComponent({
+  id,
   head,
+  footer,
   items,
   basePath,
-  toggle,
-  onToggleChange,
-  // onChange,
-  // hasAccess,
   className = "",
 } : sidebarProps) {
-  const pathName           =  usePathname();
+  const pathName               =  usePathname();
+  const { toggle, setToggle }  =  useToggleContext()
 
   const [shows, setShows]  =  useState<string[]>([]);
 
   const setShow = (key: string) => {
-    setShows((prevShows) =>
-      prevShows?.find((pk) => pk === key)
-        ? prevShows.filter((pk) => pk !== key)
-        : [...prevShows, key],
-    );
+    setShows((prevShows) => prevShows?.find((pk) => pk === key) ? prevShows.filter((pk) => pk !== key) : [...prevShows, key]);
   };
 
   const checkShow = (key: string): boolean => {
@@ -130,29 +121,46 @@ export function SidebarComponent({
     });
   }, []);
 
+  useEffect(() => {
+    setToggle(`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`, false)
+  }, [pathName]);
+
   return (
     <>
-      <div
+      <div 
         className={cn(
           "sidebar-backdrop",
-          toggle ? "scale-100 md:scale-0" : "scale-0",
+          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "scale-100 lg:scale-0" : "scale-0",
           pcn<CT>(className, "backdrop"),
-        )}
-        onClick={() => onToggleChange?.()}
+        )} 
+        onClick={() => setToggle(`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`)}
       ></div>
-      <aside
+      <aside 
         className={cn(
           "sidebar-base scroll-sm",
-          toggle ? "scale-x-100 md:scale-x-0" : "scale-x-0 md:scale-x-100",
+          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "w-full sm:w-[280px]" : "w-0 sm:w-14 lg:w-[280px]",
           pcn<CT>(className, "base"),
         )}
       >
-        {head}
-        <nav className="flex flex-col flex-1 mt-3">
+        <div className={toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "block" : "hidden lg:block"}>
+          {head}
+        </div>
+
+        <div 
+          className={toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "hidden" : "flex justify-center pt-4 h-full lg:hidden"}
+          onClick={() => setToggle(`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`)}
+        >
+          <Icon icon={"solid/bars"} />
+        </div>
+
+        <nav className={cn(
+          "flex flex-col flex-1 overflow-hidden", 
+          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "w-full" : "w-0 lg:w-full",
+        )}>
           {items?.map((menu_head, menu_head_key) => {
             return (
               <Fragment key={menu_head_key}>
-                <div className="px-2 pt-2">
+                <div className="">
                   <div
                     className={cn(
                       "sidebar-head-item",
@@ -164,10 +172,9 @@ export function SidebarComponent({
                   >
                     {menu_head?.label}
                     {menu_head.collapse && (
-                      <FontAwesomeIcon
-                        icon={faChevronDown}
+                      <Icon
+                        icon={"solid/chevron-down"}
                         className={cn(
-                          "text-xs",
                           checkShow(String(menu_head_key)) && "rotate-180",
                         )}
                       />
@@ -189,16 +196,14 @@ export function SidebarComponent({
                             <div
                               className={cn(
                                 "sidebar-item",
-                                menu?.path &&
-                                  cekActive(menu?.path || "") &&
-                                  "sidebar-item-active",
+                                menu?.path && cekActive(menu?.path || "") && "sidebar-item-active",
                                 pcn<CT>(className, "item"),
                                 menu?.className,
                               )}
                             >
                               <div className="flex gap-2 items-center">
                                 {menu?.leftContent}
-                                <span className="text-sm font-medium">
+                                <span className="font-medium">
                                   {menu?.label}
                                 </span>
                               </div>
@@ -206,9 +211,9 @@ export function SidebarComponent({
                                 {menu?.rightContent}
 
                                 {menu?.items?.length && (
-                                  <FontAwesomeIcon
-                                    icon={faChevronUp}
-                                    className={`text-sm ${
+                                  <Icon
+                                    icon={"solid/chevron-up"}
+                                    className={`text-[10px] ${
                                       checkShow(
                                         `${menu_head_key}.${menu_key}`,
                                       ) || "rotate-180"
@@ -251,7 +256,7 @@ export function SidebarComponent({
                                         >
                                           <div className="flex gap-2 items-center">
                                             {child?.leftContent}
-                                            <span className="text-sm font-medium">
+                                            <span className="text-[10px] font-medium">
                                               {child?.label}
                                             </span>
                                           </div>
@@ -259,9 +264,9 @@ export function SidebarComponent({
                                             {child?.rightContent}
 
                                             {child?.items?.length && (
-                                              <FontAwesomeIcon
-                                                icon={faChevronUp}
-                                                className={`block text-sm ${
+                                              <Icon
+                                                icon={"solid/chevron-up"}
+                                                className={`block text-[10px] ${
                                                   checkShow(
                                                     `${menu_head_key}.${menu_key}`,
                                                   ) || "rotate-180"
@@ -284,6 +289,10 @@ export function SidebarComponent({
             );
           })}
         </nav>
+
+        <div className={toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "block" : "hidden lg:block"}>
+          {footer}
+        </div>
       </aside>
     </>
   );
@@ -291,7 +300,7 @@ export function SidebarComponent({
 
 export function SidebarContentComponent({ children }: { children: ReactNode }) {
   return (
-    <main className="sidebar-main-content">
+    <main className="w-full sm:ml-14 sm:w-[calc(100vw-56px)] lg:ml-[280px] lg:w-[calc(100vw-280px)] min-h-screen overflow-x-hidden">
       {children}
     </main>
   );

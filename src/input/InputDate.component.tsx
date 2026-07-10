@@ -2,8 +2,7 @@
 
 import { InputHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import moment from "moment";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
 import { BottomSheetComponent } from "../modal/BottomSheet.component";
 import { ButtonComponent } from "../button/Button.component";
@@ -127,7 +126,7 @@ export function InputDateComponent({
             />
 
             {leftIcon && (
-              <FontAwesomeIcon
+              <Icon
                 className={cn(
                   "input-icon",
                   "input-icon-left",
@@ -142,7 +141,7 @@ export function InputDateComponent({
             )}
 
             {rightIcon && (
-              <FontAwesomeIcon
+              <Icon
                 className={cn(
                   "input-icon",
                   "input-icon-right",
@@ -336,14 +335,14 @@ export const InputDatePickerComponent: React.FC<InputDatePickerProps> = ({
             onClick={handlePrevMonth}
             className="w-8 text-sm aspect-square rounded-full cursor-pointer"
           >
-            <FontAwesomeIcon icon={faChevronLeft} />
+            <Icon icon="solid/chevron-left" />
           </button>
           <h2 className="font-semibold">{currentDate.format("MMMM")}</h2>
           <button
             onClick={handleNextMonth}
             className="w-8 text-sm aspect-square rounded-full cursor-pointer"
           >
-            <FontAwesomeIcon icon={faChevronRight} />
+            <Icon icon="solid/chevron-right" />
           </button>
         </div>
         <div className="grid grid-cols-7 gap-1 mb-2">{renderDays()}</div>

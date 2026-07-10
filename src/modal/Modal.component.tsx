@@ -1,7 +1,6 @@
 "use client"
 
 import { ReactNode, useEffect } from "react";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { cn, pcn, shortcut } from "@utils";
 import { ButtonComponent } from "../button/Button.component";
 
@@ -74,7 +73,7 @@ export function ModalComponent({
             </div>
 
             <ButtonComponent
-              icon={faTimes}
+              icon="solid/times"
               variant="simple"
               paint="danger"
               onClick={() => onClose()}

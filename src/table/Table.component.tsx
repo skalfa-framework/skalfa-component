@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { isValidElement, ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDownZA, faArrowUpAZ, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { ApiFilterType, cn, pcn, useLazySearch, useResponsive, conversion } from "@utils";
 import { ControlBarComponent, ControlBarOptionType } from "./ControlBar.component";
 import { PaginationComponent, PaginationProps } from "./Pagination.component";
@@ -158,8 +158,8 @@ export function TableComponent({
               {column.label}
 
               {!!sortColumn && (
-                <FontAwesomeIcon
-                  icon={sortDirection == "desc" ? faArrowDownZA : faArrowUpAZ}
+                <Icon
+                  icon={sortDirection == "desc" ? "solid/arrow-down-z-a" : "solid/arrow-up-a-z"}
                   className="text-light-foreground/70"
                 />
               )}
@@ -379,7 +379,7 @@ export function TableComponent({
                               }
                             >
                               <div className="table-floating-action-icon-wrapper">
-                                <FontAwesomeIcon icon={floatingActionActive === false || floatingActionActive != key ? faChevronLeft : faChevronRight}/>
+                                <Icon icon={floatingActionActive === false || floatingActionActive != key ? "solid/chevron-left" : "solid/chevron-right"}/>
                               </div>
 
                               <div className={cn("table-floating-action-content", floatingActionActive === key && "table-floating-action-content-active")}>

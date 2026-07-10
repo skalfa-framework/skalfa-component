@@ -1,8 +1,8 @@
 "use client"
+import { Icon, type IconName } from "@skalfa/skalfa-icon";
+
 
 import { useState, useRef, InputHTMLAttributes, ReactNode } from "react";
-import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cn, pcn, registry, useInputHandler, useInputRandomId, useResponsive, useValidation, validation, ValidationRules } from "@utils";
 import { ButtonComponent } from "../button/Button.component";
 import { FloatingPageComponent } from "../modal/FloatingPage.component";
@@ -152,7 +152,7 @@ export function InputDocumentComponent({
                     key={f.id}
                     className="input-document-value-item"
                   >
-                    <FontAwesomeIcon icon={DocumentViewerIcon(f.file.name.split(".").pop()?.toLowerCase())} className="text-light-foreground" />
+                    <Icon icon={DocumentViewerIcon(f.file.name.split(".").pop()?.toLowerCase())} className="text-light-foreground" />
                     <span className="line-clamp-1">{f.file.name}</span>
                   </span>
                 )
@@ -161,7 +161,7 @@ export function InputDocumentComponent({
           )}
 
           {leftIcon && (
-            <FontAwesomeIcon
+            <Icon
               className={cn(
                 "input-icon",
                 "input-icon-left",
@@ -176,7 +176,7 @@ export function InputDocumentComponent({
           )}
 
           {rightIcon && (
-            <FontAwesomeIcon
+            <Icon
               className={cn(
                 "input-icon",
                 "input-icon-right",
@@ -306,7 +306,7 @@ export const InputDocumentPicker: React.FC<InputDocumentPickerProps> = ({ value,
           />
         ) : (
           <div className="input-document-empty-box" onClick={() => fileInputRef.current?.click()}>
-            <FontAwesomeIcon icon={faPlus} className="text-3xl" />
+            <Icon icon="solid/plus" className="text-3xl" />
             <p className="text-lg">Tambah Dokumen</p>
           </div>
         )}
@@ -338,7 +338,7 @@ export const InputDocumentPicker: React.FC<InputDocumentPickerProps> = ({ value,
                 />
 
                 <ButtonComponent
-                  icon={faTimes}
+                  icon="solid/times"
                   onClick={() => removeFile(f.id)}
                   variant="light"
                   paint="danger"
@@ -350,7 +350,7 @@ export const InputDocumentPicker: React.FC<InputDocumentPickerProps> = ({ value,
           })}
 
           <div className="input-document-upload-box" onClick={() => fileInputRef.current?.click()}>
-            <FontAwesomeIcon icon={faPlus} />
+            <Icon icon="solid/plus" />
             <p className="text-[10px] text-center">Tambah Dokumen</p>
           </div>
         </div>
