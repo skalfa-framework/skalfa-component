@@ -380,7 +380,7 @@ export function FormSupervisionComponent({
             )}
 
             {modal == "failed" && (
-              <div className="mt-4 w-full p-4 rounded-sm border border-danger bg-light-danger flex gap-4 items-center">
+              <div className="col-span-12 mt-4 w-full p-4 rounded-sm border border-danger bg-light-danger flex gap-4 items-center">
                 <div>
                   <div className="w-10 h-10 rounded-full bg-danger/20 flex items-center justify-center">
                     <Icon icon={"solid/exclamation-triangle"} className="text-danger text-lg" />
