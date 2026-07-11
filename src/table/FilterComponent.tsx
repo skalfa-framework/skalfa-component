@@ -11,6 +11,7 @@ import { InputNumberComponent } from "../input/InputNumber.component";
 import { ModalComponent } from "../modal/Modal.component";
 import { SelectComponent } from "../input/Select.component";
 import { useToggleContext } from "@contexts";
+import { useLang } from "@skalfa/skalfa-lang";
 
 type CT = "base" | "title";
 
@@ -65,6 +66,8 @@ export function FilterComponent({
   onMinimize,
   className = "",
 }: AdvancedFilterProps) {
+  const l = useLang();
+  
   const { isSm }                                 =  useResponsive();
   const { toggle, setToggle }                    =  useToggleContext()
   const [filters, setFilters]                    =  useState<ApiFilterType[]>([]);
@@ -116,7 +119,7 @@ export function FilterComponent({
     <>
       <div className={cn("filter-panel", pcn<CT>(className, "base"))}>
         <div className="filter-panel-header">
-          <p className={cn(pcn<CT>(className, "title"))}>Filter</p>
+          <p className={cn(pcn<CT>(className, "title"))}>{l.base.filter ? l.base.filter() : "Filter"}</p>
           <div className="filter-panel-controls">
             <div className="filter-panel-bookmarks-wrapper">
               <ButtonComponent
@@ -150,7 +153,7 @@ export function FilterComponent({
 
             <ButtonComponent
               icon="solid/rotate"
-              label="Bersihkan"
+              label={l.base.clear ? l.base.clear() : "Filter"}
               variant="outline"
               paint="primary"
               className="filter-panel-bookmark-btn icon::text-slate-400"
@@ -181,7 +184,7 @@ export function FilterComponent({
                   <SelectComponent
                     name={`filter_logic_${i}`}
                     options={LOGIC_OPTIONS}
-                    placeholder="Dan/Atau"
+                    placeholder={l.base.filterLogic ? l.base.filterLogic() : "And/Or"}
                     value={f.logic}
                     onChange={(e) => handleChange(i, "logic", e as "and" | "or")}
                     className="filter-input-field"
@@ -196,7 +199,7 @@ export function FilterComponent({
                     label: c.label,
                     value: c.selector,
                   }))}
-                  placeholder="Kolom"
+                  placeholder={l.base.column ? l.base.column() : "Column"}
                   value={f.column}
                   onChange={(e) => handleChange(i, "column", e)}
                   className="filter-input-field"
@@ -207,7 +210,7 @@ export function FilterComponent({
                 <SelectComponent
                   name={`filter_operator_${i}`}
                   options={FILTER_OPERATORS}
-                  placeholder="Operator"
+                  placeholder={l.base.filterOperator ? l.base.filterOperator() : "Operation"}
                   value={f.type}
                   onChange={(e) => handleChange(i, "type", e)}
                   className="filter-input-field"
@@ -254,7 +257,7 @@ export function FilterComponent({
         })}
 
         <ButtonComponent
-          label="Tambahkan"
+          label={l.base.add ? l.base.add() : "Add"}
           icon="solid/plus"
           variant="outline"
           paint="primary"
@@ -267,7 +270,7 @@ export function FilterComponent({
       <ModalComponent
         show={!!toggle["MODAL_BOOKMARK_LIST"]}
         onClose={() => setToggle("MODAL_BOOKMARK_LIST", false)}
-        title="Bookmark Filter"
+        title={l.base.filterBookmarks ? l.base.filterBookmarks() : "Filter Bookmark"}
       >
         <div className="filter-bookmark-list-container">
           {bookmarks?.length ? bookmarks?.map((b, key) => (
@@ -296,7 +299,7 @@ export function FilterComponent({
               </div>
             </div>
           )) : (
-            <div className="filter-bookmark-empty-text"> -- Tidak ada Bookmark --</div>
+            <div className="filter-bookmark-empty-text"> -- {l.base.filterBookmarkEmpty ? l.base.filterBookmarkEmpty() : "No Bookmark"} --</div>
           )}
         </div>
       </ModalComponent>
@@ -304,11 +307,11 @@ export function FilterComponent({
       <ModalComponent
         show={!!toggle["MODAL_BOOKMARK"]}
         onClose={() => setToggle("MODAL_BOOKMARK", false)}
-        title="Bookmark Filter"
+        title={l.base.filterBookmark ? l.base.filterBookmark() : "Filter Bookmark"}
         footer={
           <div className="flex justify-end">
             <ButtonComponent 
-              label="Terapkan"
+              label={l.base.apply ? l.base.apply() : "Apply"}
               onClick={() => {
                 let updated: FilterBookmark[] = [];
 
@@ -339,12 +342,12 @@ export function FilterComponent({
         <div className="filter-bookmark-form-container">
           <SelectComponent
             name={`bookmark_id`}
-            placeholder="Pilih bookmark filter..."
+            placeholder={l.base.filterBookmarkPlaceholder ? l.base.filterBookmarkPlaceholder() : "Pilih bookmark filter..."}
             value={(toggle["MODAL_BOOKMARK"] as { bookmark_id: string })?.bookmark_id ?? ""}
             onChange={e => setToggle("MODAL_BOOKMARK", {...(toggle["MODAL_BOOKMARK"] as object), bookmark_id: e})}
             options={[
               {
-                label: "-- BOOKMARK BARU --",
+                label: `-- ${l.base.filterBookmarkNew ? l.base.filterBookmarkNew() : "New Filter Bookmark"} --`,
                 value: "new",
               },
               ...bookmarks.map((b) => ({
@@ -357,7 +360,7 @@ export function FilterComponent({
           {(toggle["MODAL_BOOKMARK"] as { bookmark_id: string })?.bookmark_id == "new" && (
             <InputComponent 
               name="bookmark_name"
-              placeholder="Masukkan nama bookmark..."
+              placeholder={l.base.filterBookmarkNewPlaceholder ? l.base.filterBookmarkNewPlaceholder() : "Masukkan nama bookmark..."}
               value={(toggle["MODAL_BOOKMARK"] as { bookmark_name: string })?.bookmark_name ?? ""}
               onChange={e => setToggle("MODAL_BOOKMARK", {...(toggle["MODAL_BOOKMARK"] as object), bookmark_name: e})}
               className="filter-bookmark-form-input"
@@ -392,6 +395,8 @@ export function InputFilterValueComponent({
   between,
   multiple,
 }: FilterInputProps) {
+  const l = useLang();
+
   const resolvedType = type || "text";
 
   if (!between) {
@@ -470,7 +475,7 @@ export function InputFilterValueComponent({
             name={`${name}_${pos}`}
             value={Number(currentValue) || 0}
             onChange={handle}
-            placeholder={pos === "from" ? "Dari" : "Sampai"}
+            placeholder={pos === "from" ? l.base.filterFrom ? l.base.filterFrom() : "Dari" : l.base.filterTo ? l.base.filterTo() : "Sampai"}
             className={className}
           />
         );
@@ -480,7 +485,7 @@ export function InputFilterValueComponent({
             name={`${name}_${pos}`}
             value={Number(currentValue) || 0}
             onChange={handle}
-            placeholder={pos === "from" ? "Dari" : "Sampai"}
+            placeholder={pos === "from" ? l.base.filterFrom ? l.base.filterFrom() : "Dari" : l.base.filterTo ? l.base.filterTo() : "Sampai"}
             className={className}
           />
         );
@@ -490,7 +495,7 @@ export function InputFilterValueComponent({
             name={`${name}_${pos}`}
             value={currentValue as string || ""}
             onChange={handle}
-            placeholder={pos === "from" ? "Dari" : "Sampai"}
+            placeholder={pos === "from" ? l.base.filterFrom ? l.base.filterFrom() : "Dari" : l.base.filterTo ? l.base.filterTo() : "Sampai"}
             className={className}
           />
         );
@@ -500,7 +505,7 @@ export function InputFilterValueComponent({
             name={`${name}_${pos}`}
             value={currentValue || ""}
             onChange={(e: any) => handle(e.target.value)}
-            placeholder={pos === "from" ? "Dari" : "Sampai"}
+            placeholder={pos === "from" ? l.base.filterFrom ? l.base.filterFrom() : "Dari" : l.base.filterTo ? l.base.filterTo() : "Sampai"}
             className={className}
           />
         );

@@ -69,15 +69,15 @@ const defaultColumns: FooterColumnProps[] = [
 ];
 
 export function FooterComponent({
-  brandTitle = "Next Light v.3",
-  brandSubtitle = "The Magic Starter Template",
-  address = { label: "Soekarno Hatta No 27 C, Ponorogo, Jawa Timur, Indonesia", path: "https://maps.app.goo.gl/TY2QDjFPm3RfwjUq6" },
-  phone = { label: "+62 888888888888", path: "https://wa.me/6281456140392" },
-  email = { label: "example@gmail.com", path: "mailto:sejedigital@gmail.com" },
-  supportHours = "24 / 7 Online Suport | Senin - Sabtu ( 09.00 s/d 17.00 )",
-  socials = defaultSocials,
-  columns = defaultColumns,
-  copyrightLink = { label: "sejedigital.com 2020 - 2025", path: "https://sejedigital.com/" },
+  brandTitle     =  "Next Light v.3",
+  brandSubtitle  =  "The Magic Starter Template",
+  address        =  { label: "Soekarno Hatta No 27 C, Ponorogo, Jawa Timur, Indonesia", path: "https://maps.app.goo.gl/TY2QDjFPm3RfwjUq6" },
+  phone          =  { label: "+62 888888888888", path: "https://wa.me/6281456140392" },
+  email          =  { label: "example@gmail.com", path: "mailto:sejedigital@gmail.com" },
+  supportHours   =  "24 / 7 Online Suport | Senin - Sabtu ( 09.00 s/d 17.00 )",
+  socials        =  defaultSocials,
+  columns        =  defaultColumns,
+  copyrightLink  =  { label: "sejedigital.com 2020 - 2025", path: "https://sejedigital.com/" },
 }: FooterProps) {
   return (
     <>

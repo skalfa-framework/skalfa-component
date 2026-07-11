@@ -112,31 +112,31 @@ export function TableSupervisionComponent({
       shortcut.register("arrowdown", () => {
         const max = data?.data?.length - 1;
         setFocus(focus == null ? 0 : focus >= max ? max : (focus + 1))
-      }, "Pilih data kebawah")
+      }, l.base.shortcutDown ? l.base.shortcutDown() : "")
 
       shortcut.register("arrowup", () => {
         setFocus(focus == null ? 0 : focus <= 0 ? 0 : (focus - 1))
-      }, "Pilih data keatas")
+      }, l.base.shortcutUp ? l.base.shortcutUp() : "")
 
       if(focus != null) {
         shortcut.register("delete", () => {
           setSelected(data?.data?.at(focus))
           setToggle(`MODAL_DELETE_${toggleKey}`)
-        }, "Delete data yang dipilih")
+        }, l.base.shortcutDelete ? l.base.shortcutDelete() : "")
 
         shortcut.register(" ", () => {
           setSelected(data?.data?.at(focus))
           setToggle(`MODAL_FORM_${toggleKey}`)
-        }, "Edit data yang dipilih")
+        }, l.base.shortcutEdit ? l.base.shortcutEdit() : "")
   
         shortcut.register("enter", () => {
           setSelected(data?.data?.at(focus))
           setToggle(`MODAL_SHOW_${toggleKey}`)
-        }, "Detail data yang dipilih")
+        }, l.base.shortcutDetail ? l.base.shortcutDetail() : "")
 
         shortcut.register("escape", () => {
           setFocus(null)
-        }, "Kembali")
+        }, l.base.shortcutBack ? l.base.shortcutBack() : "")
       }
     }
 
@@ -339,9 +339,9 @@ export function TableSupervisionComponent({
         col           :  12,
         type          :  "text",
         construction  :  {
-          name         :  typeof col == "string" ? col                                 :  col?.selector,
-          label        :  typeof col == "string" ? col                                 :  col?.label,
-          placeholder  :  `Masukkan ${ typeof col == "string" ? col : col?.label}...`,
+          name         :  typeof col == "string" ? col : col?.selector,
+          label        :  typeof col == "string" ? col : col?.label,
+          placeholder  :  l.base.inputPlaceholder ? l.base.inputPlaceholder(`${ typeof col == "string" ? col : col?.label}`) : `Enter ${ typeof col == "string" ? col : col?.label}...`,
         },
       };
     }) || (data?.data?.at(0) ? Object.keys(data.data[0]).map((col) => {
@@ -351,7 +351,7 @@ export function TableSupervisionComponent({
           construction  :  {
             name         :  col,
             label        :  col,
-            placeholder  :  `Masukkan ${col}...`,
+            placeholder  :  l.base.inputPlaceholder ? l.base.inputPlaceholder(col) : `Enter ${col}...`,
           },
         };
       })
@@ -367,12 +367,12 @@ export function TableSupervisionComponent({
     return (
       <FormSupervisionComponent
         submitControl={(fetchControl as ApiType).path ? { 
-            path: `${(fetchControl as ApiType).path}/${(selected as { id: number })?.id || "" }`,
-            method: !(selected as { id: number })?.id ? "POST" : "PUT", 
-          } : (fetchControl as ApiType).url ? { 
-            url: `${(fetchControl as ApiType).url}/${(selected as { id: number })?.id || ""}`,
-            method: !(selected as { id: number })?.id ? "POST" : "PUT", 
-          } : { idb: (fetchControl as ({ idb: UseResourceIdb }))?.idb }
+            path    :  `${(fetchControl as ApiType).path}/${(selected as { id: number })?.id || "" }`,
+            method  :  !(selected as { id: number })?.id ? "POST"                                      :  "PUT",
+          }  :  (fetchControl as ApiType).url ? { 
+            url     :  `${(fetchControl as ApiType).url}/${(selected as { id: number })?.id || ""}`,
+            method  :  !(selected as { id: number })?.id ? "POST"                                    :  "PUT",
+          }  : { idb: (fetchControl as ({ idb: UseResourceIdb }))?.idb }
         }
         fields={fields?.filter((f: any) => f.visibility ? !(selected as { id: number })?.id ? ["*", "create"]?.includes(f.visibility) : ["*", "update"]?.includes(f.visibility) : true) as FormType[]}
         defaultValue={formControl?.defaultValue ? await formControl?.defaultValue(selected || null) : selected}
@@ -401,11 +401,12 @@ export function TableSupervisionComponent({
         controlBar={controlBar?.map((cb) => {
             if (cb == "CREATE") {
               if (isSm) return 
+
               return (
                 <div className="pl-1.5 pr-3 mr-2 border-r" key="button-add">
                   <ButtonComponent
                     icon={"solid/plus"}
-                    label="Tambah Data"
+                    label={l.base.add ? l.base.add() : "Add"}
                     size="sm"
                     onClick={() => {
                       setToggle(`MODAL_FORM_${toggleKey}`)
@@ -421,7 +422,6 @@ export function TableSupervisionComponent({
                 <div className="px-1.5 rounded-md relative" key={"import"}>
                   <ButtonComponent
                     icon={"solid/file-excel"}
-                    label="Import"
                     variant="outline"
                     className="!text-foreground"
                     onClick={() => setToggle(`MODAL_IMPORT_${toggleKey}`)}
@@ -436,7 +436,6 @@ export function TableSupervisionComponent({
                 <div className="px-1.5 rounded-md relative" key={"export-excel"}>
                   <ButtonComponent
                     icon={"solid/file-excel"}
-                    label="Export"
                     variant="outline"
                     className="!text-foreground"
                     onClick={() => setToggle(`MODAL_EXPORT_${toggleKey}`)}
@@ -451,7 +450,7 @@ export function TableSupervisionComponent({
                 <div className="px-1.5 rounded-md relative" key={"export-pdf"}>
                   <ButtonComponent
                     icon={"solid/file-pdf"}
-                    label="Cetak"
+                    label={l.base.print ? l.base.print() : "Print"}
                     variant="outline"
                     className="!text-foreground"
                     onClick={() => setToggle(`MODAL_PRINT_${toggleKey}`)}
@@ -467,7 +466,7 @@ export function TableSupervisionComponent({
             <div className="pl-1.5 pr-3 mr-2 border-r" key="button-add">
               <ButtonComponent
                 icon={"solid/plus"}
-                label="Tambah Data"
+                label={l.base.add ? l.base.add() : "Add"}
                 size="sm"
                 onClick={() => {
                   setToggle(`MODAL_FORM_${toggleKey}`)
@@ -532,7 +531,7 @@ export function TableSupervisionComponent({
       <FloatingPageComponent
         show={!!toggle[`MODAL_SHOW_${toggleKey}`]}
         onClose={() => setToggle(`MODAL_SHOW_${toggleKey}`, false)}
-        title="Detail"
+        title={l.base.detailTitle ? l.base.detailTitle() : "Detail"}
         className="bg-background"
         footer={renderTableAction(actionControl, undefined, {className: isSm ? "justify-end p-2 bg-background" : "justify-end", size: isSm ? "sm" : "md"})}
       >
@@ -543,7 +542,7 @@ export function TableSupervisionComponent({
       <FloatingPageComponent
         show={!!toggle[`MODAL_FORM_${toggleKey}`]}
         onClose={() => setToggle(`MODAL_FORM_${toggleKey}`, false)}
-        title={!!selected ? "Ubah Data" : "Tambah Data"}
+        title={!!selected ? (l.base.editTitle ? l.base.editTitle() : "Edit") : (l.base.addTitle ? l.base.addTitle() : "Add")}
         className={cn("bg-white", formControl?.modalControl?.className)}
       >
         <div className="p-4">
@@ -555,12 +554,12 @@ export function TableSupervisionComponent({
       <FloatingPageComponent
         show={!!toggle[`MODAL_EXPORT_${toggleKey}`]}
         onClose={() => setToggle(`MODAL_EXPORT_${toggleKey}`, false)}
-        title="Export Ke Excel"
+        title={l.base.exportTitle ? l.base.exportTitle() : "Export"}
         className="bg-white md:w-[1200px] max-w-[1200px]"
       >
         <ExportExcel 
           fetchControl={fetchControl} 
-          filename={"Export - " + title}
+          filename={"export"}
           columnControl={columns?.map((cc) => ({
             label: cc.label || "",
             selector: cc.selector || "",
@@ -572,7 +571,7 @@ export function TableSupervisionComponent({
       <FloatingPageComponent
         show={!!toggle[`MODAL_IMPORT_${toggleKey}`]}
         onClose={() => setToggle(`MODAL_IMPORT_${toggleKey}`, false)}
-        title="Import Dari Excel"
+        title={l.base.importTitle ? l.base.importTitle() : "Import"}
         className="bg-white md:w-[1200px] max-w-[1200px]"
       >
         <ImportExcel 
@@ -605,7 +604,7 @@ export function TableSupervisionComponent({
       <ModalConfirmComponent
         show={!!toggle[`MODAL_DELETE_${toggleKey}`]}
         onClose={() => setToggle(`MODAL_DELETE_${toggleKey}`, false)}
-        title={<>Menghapus Data <span className="font-semibold">&quot;{selected?.[columns?.at(0)?.selector || ""]}&quot;</span> ?</>}
+        title={l.base.deleteTitle ? l.base.deleteTitle({ data: selected?.[columns?.at(0)?.selector || ""] }) : `Delete ${selected?.[columns?.at(0)?.selector || ""]}?`}
         submitControl={{
           onSubmit: {
             ...((fetchControl as ApiType).path 

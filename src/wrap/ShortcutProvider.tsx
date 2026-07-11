@@ -4,8 +4,10 @@ import { useEffect, Fragment } from "react";
 import { shortcut } from "@utils"
 import { useToggleContext } from "@contexts"
 import { ModalComponent } from "../modal/Modal.component";
+import { useLang } from "@skalfa/skalfa-lang";
 
 export function ShortcutProvider() {
+  const l = useLang();
   const { setToggle, toggle } = useToggleContext();
   const shortcuts = shortcut.list()
 
@@ -16,7 +18,7 @@ export function ShortcutProvider() {
   useEffect(() => {
     shortcut.register("ctrl+/", () => {
       setToggle("MODAL_SHORTCUT_HELP")
-    }, "List Shortcut")
+    }, l.base.shortcutList ? l.base.shortcutList() : "")
   }, [])
 
   function formatShortcutKey(key: string) {
@@ -39,7 +41,7 @@ export function ShortcutProvider() {
       <ModalComponent 
         show={!!toggle["MODAL_SHORTCUT_HELP"]}
         onClose={() => setToggle("MODAL_SHORTCUT_HELP")}
-        title="Shortcut"
+        title={l.base.shortcut ? l.base.shortcut() : ""}
       >
         <div className="shortcut-help-grid">
           {shortcuts.map(({ key, description }) => (

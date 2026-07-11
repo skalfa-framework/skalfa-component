@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { api, ApiType, cn, pcn, registry, shortcut, useResponsive } from "@utils";
 import { ButtonComponent, ButtonProps, BottomSheetComponent } from "@components";
 import { Icon } from "@skalfa/skalfa-icon";
+import { useLang } from "@skalfa/skalfa-lang";
 
 
 
@@ -41,6 +42,7 @@ export function ModalConfirmComponent({
 
   className = "",
 }: ModalConfirmProps) {
+  const l                      =  useLang()
   const { isSm }               =  useResponsive();
   const [toast, setToast]      =  useState<boolean | "success" | "failed">(false);
   const [loading, setLoading]  =  useState(false);
@@ -69,7 +71,7 @@ export function ModalConfirmComponent({
           <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
             <Icon icon={"solid/check"} className="text-primary text-2xl" />
           </div>
-          <p className="text-primary text-lg font-semibold mt-4">{"Berhasil!"}</p>
+          <p className="text-primary text-lg font-semibold mt-4">{l.base.success ? l.base.success() : "Success"}</p>
         </div>
       )
     }
@@ -97,7 +99,7 @@ export function ModalConfirmComponent({
                   <Icon icon={"solid/exclamation-triangle"} className="text-danger text-lg" />
                 </div>
               </div>
-              <p className="text-danger text-sm font-semibold">{"Terjadi Masalah, Coba ulangi lagi!"}</p>
+              <p className="text-danger text-sm font-semibold">{l.base.confirmFailed ? l.base.confirmFailed() : "Failed"}</p>
             </div>
           </div>
         )}
@@ -112,14 +114,14 @@ export function ModalConfirmComponent({
     return (
       <div className="flex justify-center gap-4 p-6 pt-2">
         <ButtonComponent
-          label="Batal"
+          label={l.base.cancel ? l.base.cancel() : ""}
           variant="outline"
           onClick={() => onClose()}
           block
           size={size}
         />
         <ButtonComponent
-          label={"Konfirmasi"}
+          label={l.base.confirm ? l.base.confirm() : ""}
           loading={loading}
           onClick={async () => {
             if(!submitControl?.onSubmit) return;

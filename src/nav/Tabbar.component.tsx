@@ -41,9 +41,7 @@ export function TabbarComponent({
               key={i}
               className={cn(
                 "tabbar-item",
-                isItemActive
-                  ? "tabbar-item-active"
-                  : "tabbar-item-inactive",
+                isItemActive ? "tabbar-item-active" : "tabbar-item-inactive",
                 pcn<CT>(className, "item"),
                 pcn<CT>(className, "active"),
               )}

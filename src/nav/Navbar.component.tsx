@@ -37,12 +37,12 @@ const defaultSpecialLink = {
 } as const;
 
 export function NavbarComponent({
-  logoTitle = "Next Light v.3",
-  logoSubtitle = "The Magic Starter Template",
-  logoPath = "/",
-  specialLink = defaultSpecialLink,
-  items = defaultItems,
-  isLoggedIn = false,
+  logoTitle     =  "Next Light v.3",
+  logoSubtitle  =  "The Magic Starter Template",
+  logoPath      =  "/",
+  specialLink   =  defaultSpecialLink,
+  items         =  defaultItems,
+  isLoggedIn    =  false,
   onLogin,
   onRegister,
   onProfile,

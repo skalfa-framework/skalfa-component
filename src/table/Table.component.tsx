@@ -10,6 +10,7 @@ import { ScrollContainerComponent } from "../wrap/ScrollContainer.component";
 import { FilterColumnOption } from "./FilterComponent";
 import { CheckboxComponent } from "../input/Checkbox.component";
 import { SwipeComponent, SwipeActionType } from "../wrap/Swipe.component";
+import { useLang } from "@skalfa/skalfa-lang";
 
 type CT = "controller-bar" | "head-column" | "column" | "row" | "floating-action" | "base";
 
@@ -102,6 +103,8 @@ export function TableComponent({
   
   className = "",
 }: TableProps) {
+  const l = useLang();
+
   const [displayColumns, setDisplayColumns]              =  useState<string[]>([]);
   const [showFloatingAction, setShowFloatingAction]      =  useState(false);
   const [floatingActionActive, setFloatingActionActive]  =  useState<false | number>(false);
@@ -312,14 +315,14 @@ export function TableComponent({
             <div className="w-max min-w-full">
               <div className="table-loading-container">
                 <h1 className="table-loading-text">
-                  Memuat data...
+                  {l.base.tableLoading ? l.base.tableLoading() : ""}
                 </h1>
               </div>
             </div>
           ) : !data || !data.length ? (
             <div className="table-empty-container">
               <h1 className="table-empty-text">
-                Belum Ada Data
+                {l.base.tableEmpty ? l.base.tableEmpty() : "Data empty"}
               </h1>
             </div>
           ) : (
@@ -413,7 +416,7 @@ export function TableComponent({
 
       {!!actionBulking && !!checks?.length && (
         <div className="table-bulk-actions-bar">
-          <div className="table-bulk-actions-title">{checks?.length} Data Terpilih</div>
+          <div className="table-bulk-actions-title">{checks?.length} {l.base.tableSelected ? l.base.tableSelected() : ""}</div>
           <div className="table-bulk-actions-buttons">
             {actionBulking?.(checks)}
           </div>

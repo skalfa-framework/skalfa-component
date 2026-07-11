@@ -1,5 +1,5 @@
 "use client"
-import { Icon, type IconName } from "@skalfa/skalfa-icon";
+import { Icon } from "@skalfa/skalfa-icon";
 
 
 import { ReactNode, useEffect, useRef } from 'react'
@@ -12,6 +12,7 @@ import { OutsideClickComponent } from "../wrap/OutsideClick.component";
 import { ButtonComponent } from "../button/Button.component";
 import { BottomSheetComponent } from "../modal/BottomSheet.component";
 import { FilterComponent, FilterColumnOption } from "./FilterComponent";
+import { useLang } from "@skalfa/skalfa-lang";
 
 export type ControlBarOptionType = "SEARCH" | "SEARCHABLE" | "FILTER" | "SELECTABLE" | "REFRESH" | ReactNode;
 
@@ -56,6 +57,7 @@ export function ControlBarComponent({
   filter,
   onRefresh
 }: ControlBarProps) {
+  const l                    =  useLang();
   const {toggle, setToggle}  =  useToggleContext()
   const { isSm }             =  useResponsive();
 
@@ -65,31 +67,31 @@ export function ControlBarComponent({
     if (options?.includes("SEARCH")) {
       shortcut.register("ctrl+s", () => {
         searchRef.current?.focus()
-      }, "Cari")
+      }, l.base.shortcutSearch ? l.base.shortcutSearch() : "Search")
     }
 
     if (options?.includes("FILTER")) {
       shortcut.register("ctrl+f", () => {
         setToggle("FILTER")
-      }, "Filter")
+      },  l.base.shortcutFilter ? l.base.shortcutFilter() : "Filter")
     }
 
     if (options?.includes("SORT")) {
       shortcut.register("ctrl+o", () => {
         setToggle("SORT")
-      }, "Urutkan")
+      }, l.base.shortcutSort ? l.base.shortcutSort() : "Sort")
     }
 
     if (options?.includes("SELECTABLE")) {
       shortcut.register("ctrl+l", () => {
         setToggle("SELECTABLE")
-      }, "Kolom Ditampilkan")
+      }, l.base.shortcutSelectable ? l.base.shortcutSelectable() : "Select")
     }
 
     if (options?.includes("REFRESH")) {
       shortcut.register("ctrl+shift+r", () => {
         onRefresh?.()
-      }, "Refresh Tabel")
+      }, l.base.shortcutRefresh ? l.base.shortcutRefresh() : "Refresh")
     }
 
     return () => {
@@ -134,7 +136,7 @@ export function ControlBarComponent({
               <div className="control-bar-create-wrapper" key="button-add">
                 <ButtonComponent
                   icon="solid/plus"
-                  label="Tambah Data"
+                  label={l.base.add ? l.base.add() : "Add"}
                   size="sm"
                   onClick={() => setToggle(`MODAL_FORM_${conversion.strSnake(id).toUpperCase()}`)}
                 />
@@ -155,7 +157,7 @@ export function ControlBarComponent({
                 <InputComponent
                   ref={searchRef}
                   name="search"
-                  placeholder="Cari disini..."
+                  placeholder={l.base.searchPlaceholder ? l.base.searchPlaceholder() : "Search here..."}
                   rightIcon="solid/magnifying-glass"
                   value={search}
                   onChange={(e) => onSearch?.(e)}
@@ -213,7 +215,7 @@ export function ControlBarComponent({
                       !toggle.SELECTABLE && "control-bar-dropdown-hidden"
                     )}
                   >
-                    <p className='control-bar-dropdown-title'>Kolom Ditampilkan</p>
+                    <p className='control-bar-dropdown-title'>{l.base.selectable ? l.base.selectable() : "Show Column"}</p>
                     <InputCheckboxComponent
                       vertical
                       name="show_column"
@@ -256,7 +258,7 @@ export function ControlBarComponent({
                       !toggle.SORT && "control-bar-dropdown-hidden"
                     )}
                   >
-                    <p className='control-bar-dropdown-title'>Urut Berdasarkan</p>
+                    <p className='control-bar-dropdown-title'>{l.base.sort ? l.base.sort() : "Sort By"}</p>
                     <div className='control-bar-sort-list'>
                       {sortableOptions?.map((option, key) => {
                         const sortBy = sort?.find((s) => s.split(" ")?.at(0) == option?.selector)?.split(" ")?.at(1) || "";
@@ -376,7 +378,7 @@ export function ControlBarComponent({
                   <div key={key}>
                     <InputComponent
                       name="search"
-                      placeholder="Cari disini..."
+                      placeholder={l.base.searchPlaceholder ? l.base.searchPlaceholder() : "Search here..."}
                       rightIcon="solid/magnifying-glass"
                       value={search}
                       onChange={(e) => onSearch?.(e)}
@@ -418,7 +420,7 @@ export function ControlBarComponent({
               if (option == "SELECTABLE") {
                 return (
                   <div key={key}>
-                    <p className='control-bar-mobile-title'>Kolom Ditampilkan</p>
+                    <p className='control-bar-mobile-title'>{l.base.selectable ? l.base.selectable() : "Show Column"}</p>
                     <InputCheckboxComponent
                       vertical
                       name="show_column"
@@ -445,7 +447,7 @@ export function ControlBarComponent({
               if (option == "SORT") {
                 return sortableOptions?.length ? (
                   <div key={key}>
-                    <p className='control-bar-mobile-title'>Urut Berdasarkan</p>
+                    <p className='control-bar-mobile-title'>{l.base.sort ? l.base.sort() : "Sort By"}</p>
                     <div className='flex flex-col'>
                       {sortableOptions?.map((option, key) => {
                         const sortBy = sort?.find((s) => s.split(" ")?.at(0) == option?.selector)?.split(" ")?.at(1) || "";

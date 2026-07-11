@@ -301,7 +301,7 @@ export function FormSupervisionComponent({
           <div>
             <ButtonComponent
               icon={"solid/plus"}
-              label={`Tambah ${label || mapName}`}
+              label={`${l.base.add ? l.base.add() : "Add"} ${label || mapName}`}
               variant="outline"
               size="sm"
               onClick={addGroup}
@@ -332,6 +332,10 @@ export function FormSupervisionComponent({
     );
   };
 
+  useEffect(() => {
+    setModal(false)
+  }, [values]);
+
   return (
     <>
       {title && <h4 className={cn("text-lg font-semibold mb-4", pcn<CT>(className, "title"))}>{title}</h4>}
@@ -341,7 +345,7 @@ export function FormSupervisionComponent({
           <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
             <Icon icon={"solid/check"} className="text-primary text-2xl" />
           </div>
-          <p className="text-primary text-lg font-semibold mt-4">{successMessage || "Berhasil disimpan!"}</p>
+          <p className="text-primary text-lg font-semibold mt-4">{successMessage || l.base?.success ? l.base.success() : "Success!"}</p>
         </div>
       ) : (
         <form id={id} className={cn("flex flex-col h-full pb-8")} onSubmit={submit}>
@@ -386,7 +390,7 @@ export function FormSupervisionComponent({
                     <Icon icon={"solid/exclamation-triangle"} className="text-danger text-lg" />
                   </div>
                 </div>
-                <p className="text-danger text-sm font-semibold">{"Terjadi Masalah, Coba ulangi lagi!"}</p>
+                <p className="text-danger text-sm font-semibold">{l.base.formFailed ? l.base.formFailed() : "Failed to save data, please check your data and internet connection then try again!"}</p>
               </div>
             )}
           </div>
@@ -396,7 +400,7 @@ export function FormSupervisionComponent({
       <ModalConfirmComponent
         show={confirm.show}
         onClose={() => confirm.onClose()}
-        title={l.base?.confirmTitle ? l.base.confirmTitle() : "Yakin"}
+        title={l.base?.formConfirm ? l.base.formConfirm() : "Are you sure all data is correct?"}
         submitControl={{ onSubmit: () => confirm?.onConfirm(), paint: "primary" }}
       />
     </>
