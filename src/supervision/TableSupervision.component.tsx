@@ -222,23 +222,28 @@ export function TableSupervisionComponent({
             }
 
             if(typeof action == "object") {
-              <ButtonComponent
-                key={`action-object-${key}`}
-                label={action?.button?.label || action?.label}
-                variant={action?.button?.variant || "outline"}
-                paint={action?.button?.paint || "primary"}
-                size={action?.button?.size || options?.size || "xs"}
-                rounded={action?.button?.rounded || true}
-                onClick={() => {
-                  if (action?.button?.onClick) {
-                    action?.button?.onClick(item)
-                  } else {
-                    setToggle(`MODAL_${conversion.strSnake(action?.label).toUpperCase()}_${toggleKey}`);
-                    item && setSelected?.(item);
-                  }
-                }}
-                {...action.button}
-              />
+              return (
+                <>
+                  <ButtonComponent
+                    key={`action-object-${key}`}
+                    label={action?.button?.label || action?.label}
+                    variant={action?.button?.variant || "outline"}
+                    paint={action?.button?.paint || "primary"}
+                    size={action?.button?.size || options?.size || "xs"}
+                    rounded={action?.button?.rounded || true}
+                    className={action?.button?.className}
+                    onClick={() => {
+                      if (action?.button?.onClick) {
+                        action?.button?.onClick(item)
+                      } else {
+                        setToggle(`MODAL_${conversion.strSnake(action?.label).toUpperCase()}_${toggleKey}`);
+                        item && setSelected?.(item);
+                      }
+                    }}
+                  />
+                  {...action.button}
+                </>
+              )
             }
 
             if(typeof action == "function") {
@@ -629,6 +634,7 @@ export function TableSupervisionComponent({
             show={!!toggle[`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`]}
             onClose={() => setToggle(`MODAL_${conversion.strSnake(ac.label).toUpperCase()}_${toggleKey}`, false)}
             title={ac?.modal?.title || ac.label}
+            className={ac?.modal?.className}
             submitControl={{
               onSubmit: {
                 ...(submitControl?.path 
