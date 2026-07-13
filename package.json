@@ -1,6 +1,6 @@
 {
   "name": "@skalfa/skalfa-component",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Reusable UI components for Skalfa App.",
   "license": "MIT",
   "keywords": ["skalfa", "skalfa-app", "skalfa-component", "next-framework", "next-template"],

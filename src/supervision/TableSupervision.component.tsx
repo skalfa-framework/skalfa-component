@@ -240,8 +240,8 @@ export function TableSupervisionComponent({
                         item && setSelected?.(item);
                       }
                     }}
+                    {...action.button}
                   />
-                  {...action.button}
                 </>
               )
             }
