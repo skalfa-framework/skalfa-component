@@ -154,7 +154,7 @@ export function SidebarComponent({
         </div>
 
         <nav className={cn(
-          "flex flex-col flex-1 overflow-hidden", 
+          "flex flex-col flex-1 overflow-y-auto overflow-x-hidden", 
           toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "w-full" : "w-0 lg:w-full",
         )}>
           {items?.map((menu_head, menu_head_key) => {
