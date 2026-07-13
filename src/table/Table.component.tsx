@@ -261,7 +261,7 @@ export function TableComponent({
 
 
   return (
-    <div className={cn("relative", pcn<CT>(className, "base"))}>
+    <div className={cn("relative table-container", pcn<CT>(className, "base"))}>
       {controlBar != false && (
         <ControlBarComponent 
           id={id}

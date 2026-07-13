@@ -63,7 +63,7 @@ export type TableSupervisionProps = {
       row              :  object,
       setModal        ?:  (type: "EDIT" | "DELETE") => void,
       setDataSelected ?:  () => void,
-      setShortcut     ?:  (key: string, handler: ShortcutHandler, description?: string) => void,
+      reset           ?:  () => void,
       size            ?:  string,
     ) => ReactNode)
   )[];
@@ -259,7 +259,7 @@ export function TableSupervisionComponent({
                       setToggle(`MODAL_DELETE_${toggleKey}`);
                       item && setSelected?.(item);
                     }
-                  }, () => item && setSelected?.(item), () => {}, options?.size)}
+                  }, () => item && setSelected?.(item), () => reset?.(), options?.size)}
                 </span>
               )
             }
