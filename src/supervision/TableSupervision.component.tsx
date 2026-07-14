@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect, useMemo } from "react";
+import { Fragment, ReactNode, useEffect, useMemo } from "react";
 import { ApiType, cn, conversion, registry, shortcut, ShortcutHandler, UseResourceIdb, UseResourceProps, useResponsive, useTable } from "@utils";
 import { useToggleContext } from "@contexts";
 import { FloatingPageComponent, FloatingPageProps, ButtonComponent, TableColumnType, TableComponent, FormSupervisionComponent, FormType, ModalConfirmComponent, TypographyColumnComponent, ButtonProps, ModalConfirmProps, TableProps, ControlBarOptionType, SwipeActionType, BottomSheetProps } from "../";
@@ -36,12 +36,15 @@ export interface TableSupervisionFormProps {
 };
 
 export type TableSupervisionDetailProps = boolean 
-    | (
-      | string 
-      | { label: string, item: string | ((data: Record<string, any>) => ReactNode), conversion?: keyof typeof conversion }
+    | {
+      modalControl: Omit<FloatingPageProps, "show" | "onClose">
+      content: (
+        | string 
+        | { label: string, item: string | ((data: Record<string, any>) => ReactNode), conversion?: keyof typeof conversion }
+        | ((data: Record<string, any>) => ReactNode)
+      )[] 
       | ((data: Record<string, any>) => ReactNode)
-    )[] 
-    | ((data: Record<string, any>) => ReactNode);
+    };
 
 export type TableSupervisionProps = {
   fetchControl     :  UseResourceProps;
@@ -56,9 +59,10 @@ export type TableSupervisionProps = {
   actionControl   ?:  boolean | (
     | 'EDIT' | 'DELETE' | {
       label           :  string,
-      modal          ?:  ModalConfirmProps,
+      modal          ?:  Omit<ModalConfirmProps, "show" | "onClose">,
       button         ?:  ButtonProps,
       shortcut       ?:  { key: string, description: string },
+      on             ?:  (item: Record<string, any>) => boolean,
     } | ((
       row              :  object,
       setModal        ?:  (type: "EDIT" | "DELETE") => void,
@@ -222,10 +226,11 @@ export function TableSupervisionComponent({
             }
 
             if(typeof action == "object") {
+              if (action.on && action.on?.(item || {}) == false)  return
+
               return (
-                <>
+                <Fragment key={`action-object-${key}`}>
                   <ButtonComponent
-                    key={`action-object-${key}`}
                     label={action?.button?.label || action?.label}
                     variant={action?.button?.variant || "outline"}
                     paint={action?.button?.paint || "primary"}
@@ -242,7 +247,7 @@ export function TableSupervisionComponent({
                     }}
                     {...action.button}
                   />
-                </>
+                </Fragment>
               )
             }
 
@@ -295,7 +300,7 @@ export function TableSupervisionComponent({
         <div className={cn(
           "flex flex-col gap-y-4", 
         )}>
-          {!!selected && (typeof detailControl === "object" && detailControl?.length ? detailControl?.map((column, key) => {
+          {!!selected && (typeof detailControl === "object" && typeof detailControl.content === "object" && detailControl?.content?.length ? detailControl?.content?.map((column, key) => {
             if (typeof column === "string") {
               return (<TypographyColumnComponent
                 key={key}
@@ -311,7 +316,7 @@ export function TableSupervisionComponent({
             } else {
               return column?.(selected)
             }
-          }) : typeof detailControl == "function" ?  detailControl(selected) : columns?.map((column, key) => (
+          }) : typeof detailControl === "object" && typeof detailControl.content === "function" ?  detailControl?.content?.(selected) : columns?.map((column, key) => (
             <TypographyColumnComponent
               key={key}
               title={column.label} 
@@ -346,7 +351,7 @@ export function TableSupervisionComponent({
         construction  :  {
           name         :  typeof col == "string" ? col : col?.selector,
           label        :  typeof col == "string" ? col : col?.label,
-          placeholder  :  l.base.inputPlaceholder ? l.base.inputPlaceholder(`${ typeof col == "string" ? col : col?.label}`) : `Enter ${ typeof col == "string" ? col : col?.label}...`,
+          placeholder  :  l.base.inputPlaceholder ? l.base.inputPlaceholder({field: `${ typeof col == "string" ? col : col?.label}`}) : `Enter ${ typeof col == "string" ? col : col?.label}...`,
         },
       };
     }) || (data?.data?.at(0) ? Object.keys(data.data[0]).map((col) => {
@@ -356,7 +361,7 @@ export function TableSupervisionComponent({
           construction  :  {
             name         :  col,
             label        :  col,
-            placeholder  :  l.base.inputPlaceholder ? l.base.inputPlaceholder(col) : `Enter ${col}...`,
+            placeholder  :  l.base.inputPlaceholder ? l.base.inputPlaceholder({field: col}) : `Enter ${col}...`,
           },
         };
       })
@@ -539,6 +544,7 @@ export function TableSupervisionComponent({
         title={l.base.detailTitle ? l.base.detailTitle() : "Detail"}
         className="bg-background"
         footer={renderTableAction(actionControl, undefined, {className: isSm ? "justify-end p-2 bg-background" : "justify-end", size: isSm ? "sm" : "md"})}
+        {...(typeof detailControl === "object" ? detailControl?.modalControl || {} : {})}
       >
         {detailPage}
       </FloatingPageComponent>
