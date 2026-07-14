@@ -226,7 +226,7 @@ export function TableSupervisionComponent({
             }
 
             if(typeof action == "object") {
-              if (action.on && !action.on?.(item || {})) return
+              if (action.on !== undefined && (typeof action.on === 'function' ? !action.on(item || {}) : !action.on)) return
 
               return (
                 <Fragment key={`action-object-${key}`}>
