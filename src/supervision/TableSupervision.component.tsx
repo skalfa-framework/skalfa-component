@@ -648,6 +648,7 @@ export function TableSupervisionComponent({
                   : {url: `${submitControl?.url}/${(selected as { id: number })?.id || ""}`}
                 ),
                 method: submitControl?.method || "POST",
+                payload: submitControl?.payload,
               },
               onSuccess: () => {
                 reset();
