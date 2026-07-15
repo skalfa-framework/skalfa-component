@@ -199,7 +199,7 @@ export function InputPasswordComponent({
               strength === "excellent" && "password-strength-bar-excellent",
             )}
           />
-          <span
+          {/* <span
             className={cn(
               "password-strength-text",
               strength === "weak" && "password-strength-text-weak",
@@ -208,7 +208,7 @@ export function InputPasswordComponent({
             )}
           >
             {strength === "weak" ? "Weak" : strength === "strong" ? "Strong" : "Excellent"}
-          </span>
+          </span> */}
         </div>
       )}
 
