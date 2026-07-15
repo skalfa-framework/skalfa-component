@@ -625,6 +625,7 @@ export function TableSupervisionComponent({
             ),
             method: "DELETE",
           },
+          paint: "danger",
           onSuccess: () => {
             reset();
             setTimeout(() => { setToggle(`MODAL_DELETE_${toggleKey}`, false) }, 900);

@@ -3,6 +3,7 @@
 import { InputHTMLAttributes, ReactNode, useEffect, useState } from "react";
 import { Icon } from "@skalfa/skalfa-icon";
 import { cn, pcn, useInputHandler, useInputRandomId, useValidation, validation, ValidationRules } from "@utils";
+import { useLang } from "@skalfa/skalfa-lang";
 
 
 
@@ -45,6 +46,7 @@ export function InputPasswordComponent({
   className = "",
   ...props
 }: InputPasswordProps) {
+  const l                                      =  useLang()
   const [password, setPassword]                =  useState("");
   const [confirmPassword, setConfirmPassword]  =  useState("");
   const [strength, setStrength]                =  useState<"weak" | "strong" | "excellent" | "">("");
@@ -214,10 +216,11 @@ export function InputPasswordComponent({
         <label
           htmlFor={randomConfirmId}
           className={cn("input-label", pcn<CT>(className, "label"))}
-        >Password Confirm</label>
+        >{l.base.passwordConfirm ? l.base.passwordConfirm() : "Password Confirm"}</label>
         <div className="relative">
           <input
             {...props}
+            placeholder={l.base.passwordConfirm ? l.base.passwordConfirm() : "Repeat password..."}
             id={randomConfirmId}
             type="password"
             className={cn(
@@ -238,7 +241,7 @@ export function InputPasswordComponent({
       </div>
 
       {isConfirmMismatch && (
-        <small className="input-error-message">Password confirmation not match</small>
+        <small className="input-error-message">{l.base.passwordConfirmFailed ? l.base.passwordConfirmFailed() : "Passwords do not match!"}</small>
       )}
     </div>
   );
