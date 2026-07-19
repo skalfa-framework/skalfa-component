@@ -333,7 +333,7 @@ export function FormSupervisionComponent({
   };
 
   useEffect(() => {
-    setModal(false)
+    (modal == "failed") &&  setModal(false)
   }, [values]);
 
   return (
@@ -345,7 +345,7 @@ export function FormSupervisionComponent({
           <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
             <Icon icon={"solid/check"} className="text-primary text-2xl" />
           </div>
-          <p className="text-primary text-lg font-semibold mt-4">{successMessage || l.base?.success ? l.base.success() : "Success!"}</p>
+          <p className="text-primary text-lg font-semibold mt-4 mb-12">{successMessage || l.base?.success ? l.base.success() : "Success!"}</p>
         </div>
       ) : (
         <form id={id} className={cn("flex flex-col h-full pb-8")} onSubmit={submit}>
