@@ -293,7 +293,7 @@ export function TableComponent({
       <div className="relative">
         <ScrollContainerComponent
           scrollFloating={!isSm && block}
-          className="w-full"
+          className={`w-full ${block ? "pb-12" : ""}`}
           onScroll={(e) => {
             actionColumnRef.current?.clientWidth &&  e.scrollLeft &&
               setShowFloatingAction(e.scrollLeft + e.clientWidth <=  e.scrollWidth - actionColumnRef.current?.clientWidth);

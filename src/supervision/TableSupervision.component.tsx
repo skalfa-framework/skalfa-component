@@ -431,7 +431,7 @@ export function TableSupervisionComponent({
               return (
                 <div className="px-1.5 rounded-md relative" key={"import"}>
                   <ButtonComponent
-                    icon={"solid/file-excel"}
+                    icon={"solid/import"}
                     variant="outline"
                     className="!text-foreground"
                     onClick={() => setToggle(`MODAL_IMPORT_${toggleKey}`)}
@@ -445,7 +445,7 @@ export function TableSupervisionComponent({
               return (
                 <div className="px-1.5 rounded-md relative" key={"export-excel"}>
                   <ButtonComponent
-                    icon={"solid/file-excel"}
+                    icon={"solid/export"}
                     variant="outline"
                     className="!text-foreground"
                     onClick={() => setToggle(`MODAL_EXPORT_${toggleKey}`)}
