@@ -2,8 +2,9 @@
 import { Icon, type IconName } from "@skalfa/skalfa-icon";
 
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { api, ApiType, cavity, cn, pcn, registry, useInputHandler, useInputRandomId, useLazySearch, useValidation, validation, ValidationRules,} from "@utils";
+import { OutsideClickComponent } from "../wrap/OutsideClick.component";
 
 
 
@@ -24,7 +25,7 @@ export interface SelectProps {
   leftIcon     ?:  any;
   rightIcon    ?:  any;
 
-  value        ?:  string | number | (string | number)[];
+  value        ?:  string | number | (string | number)[] | Record<string, any>;
   invalid      ?:  string;
   disabled     ?:  boolean;
   validations  ?:  ValidationRules;
@@ -42,8 +43,10 @@ export interface SelectProps {
   tempOptions          ?:  SelectOptionProps[];
   newOption            ?:  SelectOptionProps;
   maxShowOption        ?:  number;
+  creatable            ?:  boolean | string;
+  creatableLabel       ?:  string;
 
-  onChange  ?:  (value: string | number | (string | number)[], data?: any) => any;
+  onChange  ?:  (value: any, data?: any) => any;
   register    ?:  (name: string, validations?: ValidationRules) => void;
   unregister  ?:  (name: string) => void;
   onFocus   ?:  () => void;
@@ -81,6 +84,8 @@ export function SelectComponent({
   tempOptions,
   newOption,
   maxShowOption = 10,
+  creatable,
+  creatableLabel,
 
   register,
   unregister,
@@ -101,6 +106,28 @@ export function SelectComponent({
   const [keyword, setKeyword]                  =  useState("");
   const [keywordSearch]                        =  useLazySearch(keyword);
 
+  const creatableKey = typeof creatable === "string" ? (creatable || "name") : (creatable ? "name" : null);
+  const [isCreatingNew, setIsCreatingNew]      =  useState(false);
+  const [customText, setCustomText]            =  useState("");
+  const [dropdownCustomText, setDropdownCustomText] = useState("");
+  const isFocusingCreatable = useRef(false);
+
+  const handleCreateNewSubmit = () => {
+    if (!dropdownCustomText.trim() || !creatableKey) return;
+
+    isFocusingCreatable.current = false;
+    const valText = dropdownCustomText.trim();
+    setIsCreatingNew(true);
+    setCustomText(valText);
+    setInputShowValue(valText);
+    setShowOption(false);
+    setFilteredOptions([]);
+
+    const objVal = { [creatableKey]: valText };
+    inputHandler.setValue(objVal);
+    inputHandler.setIdle(false);
+    onChange?.(objVal);
+  };
 
   // =========================>
   // ## Initial
@@ -116,40 +143,54 @@ export function SelectComponent({
 
 
   // =========================>
+  // ## options handler
+  // =========================>
+  const optionsKey = typeof options === "object" ? JSON.stringify(options) : String(options || "");
+  const includedOptionsKey = typeof includedOptions === "object" ? JSON.stringify(includedOptions) : String(includedOptions || "");
+  const exceptOptionsKey = typeof exceptOptions === "object" ? JSON.stringify(exceptOptions) : String(exceptOptions || "");
+
+  useEffect(() => {
+    let base = options?.length ? [...options, ...includedOptions] : [...includedOptions];
+    if (exceptOptions?.length) {
+      base = base.filter((op: SelectOptionProps) => !exceptOptions.includes(op.value));
+    }
+    setDataOptions(base);
+  }, [optionsKey, includedOptionsKey, exceptOptionsKey]);
+
+  const dataOptionsKey = dataOptions.map((op) => String(op.value)).join("|");
+
+  // =========================>
   // ## change value handler
   // =========================>
   useEffect(() => {
-    if (value) {
-      inputHandler.setValue(value);
-      Array.isArray(dataOptions) && setInputShowValue((newOption ? [newOption, ...dataOptions] : dataOptions)?.find((option) => option.value == value)?.label || "");
-      inputHandler.setIdle(false);
-    } else {
-      inputHandler.setValue("");
+    const currentVal = inputHandler.value;
+    if (currentVal && typeof currentVal === "object" && !Array.isArray(currentVal) && creatableKey && creatableKey in currentVal) {
+      setIsCreatingNew(true);
+      const text = String((currentVal as Record<string, any>)[creatableKey] || "");
+      setCustomText(text);
+      setInputShowValue(text);
+    } else if (currentVal !== undefined && currentVal !== null && currentVal !== "" && typeof currentVal !== "object") {
+      setIsCreatingNew(false);
+      const matched = (newOption ? [newOption, ...dataOptions] : dataOptions)?.find((option) => option.value == currentVal);
+      setInputShowValue(matched?.label || currentVal);
+    } else if (!currentVal && !isCreatingNew) {
       setInputShowValue("");
     }
-  }, [value, dataOptions]);
-
-
-  // =========================>
-  // ## options handler
-  // =========================>
-  useEffect(() => {
-    options?.length && setDataOptions([...options, ...includedOptions].filter((op: SelectOptionProps) => !exceptOptions?.includes(op.value)));
-  }, [options]);
+  }, [inputHandler.value, dataOptionsKey, creatableKey]);
 
 
   const filterOption = (e: any) => {
-    if (dataOptions?.length) {
+    if (dataOptions?.length || creatableKey) {
       let newFilteredOptions: SelectOptionProps[] = [];
 
-      if (searchable && !serverSearchable) {
+      if (searchable && !serverSearchable && dataOptions?.length) {
         if (e.target.value) {
           newFilteredOptions = dataOptions.filter((Option) => (Option.label as string)?.toLowerCase().indexOf(e.target.value.toLowerCase()) > -1).slice(0, maxShowOption);
         } else {
           newFilteredOptions = dataOptions.slice(0, maxShowOption);
         }
       } else {
-        newFilteredOptions = dataOptions;
+        newFilteredOptions = dataOptions || [];
       }
 
       setActiveOption(-1);
@@ -166,6 +207,18 @@ export function SelectComponent({
         setActiveOption(-1);
         setFilteredOptions([]);
         setShowOption(false);
+
+        if (resultValue?.value === "__CREATE_NEW__" && creatableKey) {
+          setIsCreatingNew(true);
+          setCustomText("");
+          setInputShowValue("");
+          const objVal = { [creatableKey]: "" };
+          inputHandler.setValue(objVal);
+          onChange?.(objVal, resultValue);
+          e.preventDefault();
+          return;
+        }
+
         if (!multiple) {
           setInputShowValue(resultValue?.label || inputShowValue);
           inputHandler.setValue(resultValue?.value || inputShowValue);
@@ -284,7 +337,13 @@ export function SelectComponent({
   }, [keywordSearch, serverOptionControl?.path, serverOptionControl?.url]);
 
   return (
-    <>
+    <OutsideClickComponent
+      onOutsideClick={() => {
+        isFocusingCreatable.current = false;
+        setShowOption(false);
+        inputHandler.setFocus(false);
+      }}
+    >
       <div className="input-container">
         <label
           htmlFor={randomId}
@@ -315,11 +374,27 @@ export function SelectComponent({
         )}
 
         <div className="relative">
-          <input
-            type="hidden"
-            value={!multiple ? String(inputHandler.value) : Array().concat(inputHandler.value).map((val) => String(val))}
-            name={name}
-          />
+          {isCreatingNew && typeof inputHandler.value === "object" && inputHandler.value !== null ? (
+            Object.entries(inputHandler.value).map(([subK, subV]) => (
+              <input
+                key={subK}
+                type="hidden"
+                name={`${name.endsWith("_id") ? name.slice(0, -3) : name}[${subK}]`}
+                value={String(subV ?? "")}
+              />
+            ))
+          ) : (
+            <input
+              type="hidden"
+              value={!multiple ? (typeof inputHandler.value === "object" ? JSON.stringify(inputHandler.value) : String(inputHandler.value ?? "")) : Array().concat(inputHandler.value).map((val) => String(val))}
+              name={name}
+            />
+          )}
+          {isCreatingNew && (
+            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-stroke text-sm px-3.5 py-1.5 rounded-lg select-none pointer-events-none z-10 font-normal">
+              Baru
+            </div>
+          )}
           <input
             type="text"
             readOnly={!searchable}
@@ -330,33 +405,46 @@ export function SelectComponent({
               "input cursor-pointer",
               leftIcon && "input-with-left-icon",
               rightIcon && "input-with-right-icon",
+              isCreatingNew && "pl-[4.8rem]",
               invalidMessage && "input-error",
               pcn<CT>(className, "input"),
               invalidMessage && pcn<CT>(className, "input", "error")
             )}
-            value={(useTemp && tempOptions ? tempOptions.at(0)?.label : serverSearchable ? keyword : inputShowValue) as string}
+            value={(useTemp && tempOptions ? tempOptions.at(0)?.label : serverSearchable ? keyword : (isCreatingNew ? customText : inputShowValue)) as string}
             onChange={(e) => {
               setUseTemp(false);
               searchable && setInputShowValue(e.target.value);
               serverSearchable && setKeyword(e.target.value);
               inputHandler.setIdle(false);
-              dataOptions?.length && filterOption(e);
+              (dataOptions?.length || creatableKey) && filterOption(e);
             }}
             onFocus={(e) => {
               setUseTemp(false);
               inputHandler.setFocus(true);
               onFocus?.();
-              dataOptions?.length && filterOption(e);
+              (dataOptions?.length || creatableKey) && filterOption(e);
               searchable && e.target.select();
             }}
             onBlur={(e) => {
               setUseTemp(false);
+              if (isFocusingCreatable.current) return;
+
+              if (isCreatingNew) {
+                setTimeout(() => {
+                  if (!isFocusingCreatable.current) {
+                    inputHandler.setFocus(false);
+                  }
+                }, 100);
+                onBlur?.();
+                return;
+              }
               const value = e.target.value;
               const valueOption = dataOptions?.find((option) => (option.label as string)?.toLowerCase() == value?.toLowerCase());
 
               if (!keydown) {
                 if (!multiple) {
                   setTimeout(() => {
+                    if (isFocusingCreatable.current) return;
                     if (valueOption?.value) {
                       setInputShowValue(valueOption.label);
                       inputHandler.setValue(valueOption.value);
@@ -377,7 +465,9 @@ export function SelectComponent({
               }
 
               setTimeout(() => {
-                inputHandler.setFocus(false);
+                if (!isFocusingCreatable.current) {
+                  inputHandler.setFocus(false);
+                }
               }, 100);
 
               onBlur?.();
@@ -452,6 +542,9 @@ export function SelectComponent({
                 disabled && pcn<CT>(className, "icon", "disabled")
               )}
               onClick={() => {
+                setIsCreatingNew(false);
+                setCustomText("");
+                setDropdownCustomText("");
                 setInputShowValue("");
                 inputHandler.setValue("");
                 onChange?.("");
@@ -466,17 +559,20 @@ export function SelectComponent({
             className={cn(
               "input-icon",
               "input-icon-right",
-              "select-icon-dropdown",
+              "select-icon-dropdown cursor-pointer",
               disabled && "input-icon-disabled",
               pcn<CT>(className, "icon"),
               disabled && pcn<CT>(className, "icon", "disabled")
             )}
+            onClick={(e) => {
+              (dataOptions?.length || creatableKey) && filterOption(e);
+            }}
           >
             <Icon icon="solid/chevron-down" />
           </label>
         </div>
 
-        {!!dataOptions?.length && showOption && !loadingOption && !!filteredOptions?.length && (
+        {(!!dataOptions?.length || creatableKey) && showOption && !loadingOption && (
             <div>
               <ul
                 className={cn(
@@ -485,9 +581,71 @@ export function SelectComponent({
                   pcn<CT>(className, "suggest"),
                 )}
               >
-                {(newOption ? [newOption, ...filteredOptions] : filteredOptions ).map((option, key) => {
-                  const selected = !!((typeof inputHandler.value == "string" || typeof inputHandler.value == "number") && inputHandler.value == option.value) ||
-                    (Array.isArray(inputHandler.value) && Array().concat(inputHandler.value).find((val: string | number) => val == option.value));
+                {creatableKey && (
+                  <li
+                    className="p-2 border-b border-stroke flex items-center gap-2 cursor-default bg-white sticky top-0 z-10 mb-2"
+                    onMouseDown={(e) => {
+                      isFocusingCreatable.current = true;
+                      e.stopPropagation();
+                    }}
+                    onMouseUp={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    <input
+                      type="text"
+                      className="input flex-1 text-sm py-1.5 px-3 rounded-lg border border-stroke focus:outline-none focus:border-primary placeholder:text-slate-300 text-slate-700 bg-white"
+                      placeholder={creatableLabel || "Masukkan pilihan baru..."}
+                      value={dropdownCustomText}
+                      onMouseDown={(e) => {
+                        isFocusingCreatable.current = true;
+                        e.stopPropagation();
+                      }}
+                      onFocus={() => {
+                        isFocusingCreatable.current = true;
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          if (!isFocusingCreatable.current) {
+                            setShowOption(false);
+                            inputHandler.setFocus(false);
+                          }
+                        }, 200);
+                      }}
+                      onChange={(e) => setDropdownCustomText(e.target.value)}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleCreateNewSubmit();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="bg-light-primary text-primary p-2 rounded-lg flex items-center justify-center transition-colors shrink-0 shadow-sm cursor-pointer border-none"
+                      onMouseDown={(e) => {
+                        isFocusingCreatable.current = true;
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCreateNewSubmit();
+                      }}
+                    >
+                      <Icon icon="solid/check" className="w-4 h-4" />
+                    </button>
+                  </li>
+                )}
+
+                {(newOption ? [newOption, ...filteredOptions] : filteredOptions).map((option, key) => {
+                  const selected = !isCreatingNew && (
+                    !!((typeof inputHandler.value == "string" || typeof inputHandler.value == "number") && inputHandler.value == option.value) ||
+                    (Array.isArray(inputHandler.value) && Array().concat(inputHandler.value).find((val: string | number) => val == option.value))
+                  );
 
                   return (
                     <li
@@ -507,6 +665,8 @@ export function SelectComponent({
                         setActiveOption(key);
                         setFilteredOptions([]);
                         setShowOption(false);
+
+                        setIsCreatingNew(false);
 
                         if (!multiple) {
                           setInputShowValue(option.label);
@@ -552,6 +712,6 @@ export function SelectComponent({
           <small className={cn("input-error-message", pcn<CT>(className, "error"))}>{invalidMessage}</small>
         )}
       </div>
-    </>
+    </OutsideClickComponent>
   );
 }
