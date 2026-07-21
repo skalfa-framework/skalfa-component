@@ -70,7 +70,7 @@ export function InputCheckboxComponent({
   // =========================>
   // ## initial
   // =========================>
-  const inputHandler = useInputHandler(name, value, validations, register, false)
+  const inputHandler = useInputHandler(name, value, validations, register, false, unregister)
 
 
   // =========================>

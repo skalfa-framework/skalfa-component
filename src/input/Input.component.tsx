@@ -72,7 +72,7 @@ export function InputComponent({
   // =========================>
   // ## Initial
   // =========================>
-  const inputHandler      =  useInputHandler(props.name, value, validations, register, props.type == "file")
+  const inputHandler      =  useInputHandler(props.name, value, validations, register, props.type == "file", unregister)
   const randomId          =  useInputRandomId()
 
 

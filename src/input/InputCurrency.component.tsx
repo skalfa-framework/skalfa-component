@@ -55,7 +55,7 @@ export function InputCurrencyComponent({
   // =========================>
   // ## Initial
   // =========================>
-  const inputHandler = useInputHandler(props.name, value, validations, register, false)
+  const inputHandler = useInputHandler(props.name, value, validations, register, false, unregister)
   const randomId = useInputRandomId()
 
 

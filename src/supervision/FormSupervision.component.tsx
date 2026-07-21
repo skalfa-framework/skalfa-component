@@ -1,6 +1,6 @@
 "use client"
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { ApiType, cn, pcn, FormErrorType, FormRegisterType, FormValueType, useForm, ValidationRules, DBSchema } from "@utils";
 import {
   InputCheckboxComponent,
@@ -65,6 +65,7 @@ type ClusterConstruction = {
   tip             :  string;
   fields          :  FormType[];
   wrap            :  boolean;
+  min            ?:  number;
 
   /** Use custom class with: "label::", "tip::", "error::", "icon::", "suggest::", "suggest-item::". */
   className  :  string;
@@ -89,12 +90,28 @@ type ConstructionMap = {
 
 type TypeKeys = keyof ConstructionMap;
 
+export type WatchContext = {
+  values  : Record<string, any>
+  self    : string
+  prev    : WatchAction
+}
+
+export type WatchAction = {
+  disabled  ?: boolean
+  hidden    ?: boolean
+  value     ?: any
+  required  ?: boolean
+  readonly  ?: boolean
+  reset     ?: boolean
+}
+
 export interface FormType<T extends TypeKeys = keyof ConstructionMap> {
   col           ?:  1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | string;
   className     ?:  string;
   construction  ?:  ConstructionMap[T];
   type          ?:  T;
-  onHide        ?:  (values: any) => boolean;
+  onHide        ?:  (values: Record<string, any>) => boolean;
+  onWatch       ?:  (ctx: WatchContext) => WatchAction | undefined;
 }
 
 export interface formSupervisionProps {
@@ -130,14 +147,17 @@ export function FormSupervisionComponent({
 }: formSupervisionProps) {
   const l = useLang();
 
-  const [modal, setModal]          =  useState<boolean | "success" | "failed">(false);
-  const [fresh, setFresh]          =  useState<boolean>(true);
-  const [mapGroups, setMapGroups]  =  useState<Record<string, number[]>>({});
+  const [modal, setModal]            =  useState<boolean | "success" | "failed">(false);
+  const [fresh, setFresh]            =  useState<boolean>(true);
+  const [mapGroups, setMapGroups]      =  useState<Record<string, number[]>>({});
+  const [watchState, setWatchState]    =  useState<Record<string, WatchAction>>({});
+  const watchRef                       =  useRef<Record<string, WatchAction>>({});
 
   const [
     {
       formControl,
       setRegister,
+      setUnregister,
       values,
       setValues,
       errors,
@@ -163,6 +183,95 @@ export function FormSupervisionComponent({
       else setModal("failed");
     }
   );
+
+  // ==============================>
+  // ## Watch: collect watchers from fields
+  // ==============================>
+  const collectWatchers = (fieldList: FormType[], prefix?: string): { name: string, onWatch: NonNullable<FormType['onWatch']>, construction: any }[] => {
+    const result: { name: string, onWatch: NonNullable<FormType['onWatch']>, construction: any }[] = [];
+
+    for (const f of fieldList) {
+      const inputType = f.type || "default";
+      const name      = prefix ? `${prefix}.${f.construction?.name}` : f.construction?.name || "";
+
+      if (inputType === "cluster") {
+        const cluster   = f.construction as ClusterConstruction;
+        const groupKey  = prefix ? `${prefix}.${cluster.name}` : cluster.name;
+        const group     = mapGroups[groupKey] || [];
+
+        for (const gIndex of group) {
+          result.push(...collectWatchers(cluster.fields, `${cluster.name}[${gIndex}]`));
+        }
+      } else if (f.onWatch) {
+        result.push({ name, onWatch: f.onWatch, construction: f.construction });
+      }
+    }
+
+    return result;
+  };
+
+  // ==============================>
+  // ## Watch: execute watchers on value change
+  // ==============================>
+  useEffect(() => {
+    const watchers = collectWatchers(fields);
+    if (watchers.length === 0) {
+      if (Object.keys(watchRef.current).length > 0) {
+        watchRef.current = {};
+        setWatchState({});
+      }
+      return;
+    }
+
+    const valMap: Record<string, any> = {};
+    values.forEach((v) => { valMap[v.name] = v.value; });
+
+    const nextState    : Record<string, WatchAction> = {};
+    const valueUpdates : FormValueType[] = [];
+
+    for (const { name, onWatch, construction } of watchers) {
+      const prev   = watchRef.current[name] || {};
+      const action = onWatch({ values: valMap, self: name, prev });
+
+      if (!action) continue;
+
+      nextState[name] = action;
+
+      if (action.hidden && !prev.hidden) setUnregister(name);
+
+      if (action.required !== prev.required) {
+        const baseValidations = Array.isArray(construction?.validations) ? [...construction.validations] : [];
+        const newValidations  = action.required ? (baseValidations.includes("required") ? baseValidations : [...baseValidations, "required"]) : baseValidations.filter((v: string) => v !== "required");
+
+        setRegister({ name, validations: newValidations });
+      }
+
+      if (action.reset) {
+        const cur = valMap[name];
+
+        if (cur != null && cur !== "") valueUpdates.push({ name, value: "" });
+      } else if (action.value !== undefined && action.value !== valMap[name]) {
+        valueUpdates.push({ name, value: action.value });
+      }
+    }
+
+    if (JSON.stringify(watchRef.current) !== JSON.stringify(nextState)) {
+      watchRef.current = nextState;
+      setWatchState(nextState);
+    }
+
+    if (valueUpdates.length > 0) {
+      const merged = [...values];
+
+      for (const upd of valueUpdates) {
+        const idx = merged.findIndex(v => v.name === upd.name);
+        if (idx >= 0) merged[idx] = upd;
+        else merged.push(upd);
+      }
+
+      setValues(merged);
+    }
+  }, [values, fields, mapGroups]);
 
   const GroupsFromDefaults = (defaults: Record<string, any>): Record<string, number[]> => {
     const groups: Record<string, Set<number>> = {};
@@ -201,19 +310,46 @@ export function FormSupervisionComponent({
   }, [fields]);
 
   useEffect(() => {
-  if (defaultValue) {
-    setDefaultValues(defaultValue);
+    const minGroups: Record<string, number[]> = {};
+    const initialValues: FormValueType[] = [];
 
-    const derivedGroups = GroupsFromDefaults(defaultValue);
-    setMapGroups(derivedGroups);
+    const processMinClusters = (formList: FormType[], prefix?: string) => {
+      formList.forEach((form) => {
+        if (form.type === "cluster" && form.construction) {
+          const { name: mapName, fields: innerForms, min } = form.construction as ClusterConstruction;
+          const groupKey = prefix ? `${prefix}.${mapName}` : mapName;
+          const minCount = Math.max(0, min || 0);
 
-    resetFresh();
-  } else {
-    setDefaultValues(null);
-    setMapGroups({});
-    resetFresh();
-  }
-}, [defaultValue]);
+          if (minCount > 0) {
+            minGroups[groupKey] = Array.from({ length: minCount }, (_, i) => i);
+
+            for (let gIndex = 0; gIndex < minCount; gIndex++) {
+              innerForms.forEach((inner) => {
+                const fieldName = `${groupKey}[${gIndex}].${inner.construction?.name}`;
+                initialValues.push({ name: fieldName, value: "" });
+              });
+            }
+          }
+        }
+      });
+    };
+
+    processMinClusters(fields);
+
+    if (defaultValue) {
+      setDefaultValues(defaultValue);
+      const derivedGroups = GroupsFromDefaults(defaultValue);
+      setMapGroups({ ...minGroups, ...derivedGroups });
+      resetFresh();
+    } else {
+      setDefaultValues(null);
+      setMapGroups(minGroups);
+      if (initialValues.length > 0) {
+        setValues(initialValues);
+      }
+      resetFresh();
+    }
+  }, [defaultValue, fields]);
 
   const generateColClass = (col: string | number) => String(col).split(" ").map((c) => (c.includes(":") ? `${c.replace(":", ":col-span-")}` : `col-span-${c}`)).join(" ");
 
@@ -238,15 +374,35 @@ export function FormSupervisionComponent({
     const inputType = form.type || "default";
     const name = prefix ? `${prefix}.${form.construction?.name}` : form.construction?.name || "input_name";
 
-    if (form?.onHide?.(values)) return null;
+    const valMap: Record<string, any> = {};
+    values.forEach((v) => { valMap[v.name] = v.value; });
+
+    if (form?.onHide?.(valMap)) return null;
+
+    const ws = watchState[name];
+    if (ws?.hidden) return null;
 
     if (inputType === "cluster") {
-      const { name: mapName, fields: innerForms, label, tip, wrap, className } = form.construction as ClusterConstruction;
+      const { name: mapName, fields: innerForms, label, tip, wrap, className, min } = form.construction as ClusterConstruction;
+      const minCount = Math.max(0, min || 0);
 
       const groupKey = prefix ? `${prefix}.${mapName}` : mapName;
-      const group = mapGroups[groupKey] || [0];
+      const defaultGroup = minCount > 0 ? Array.from({ length: minCount }, (_, i) => i) : [];
+      const group = mapGroups[groupKey] ?? defaultGroup;
 
-      const addGroup = () => setMapGroups((prev) => ({ ...prev, [groupKey]: [...group, group.length] }));
+      const showDeleteButton = group.length > minCount;
+
+      const addGroup = () => {
+        const nextIndex = group.length;
+        setMapGroups((prev) => ({ ...prev, [groupKey]: [...group, nextIndex] }));
+
+        const newGroupValues = innerForms.map((inner) => ({
+          name: `${groupKey}[${nextIndex}].${inner.construction?.name}`,
+          value: "",
+        }));
+
+        setValues([...values, ...newGroupValues]);
+      };
 
       const removeGroup = (index: number) => {
         const filteredGroup = group.filter((_, i) => i !== index);
@@ -275,8 +431,12 @@ export function FormSupervisionComponent({
         setValues(updatedValues);
       };
 
+      const clusterError = errors?.find((err: FormErrorType) => err.name === groupKey || err.name === mapName)?.error;
+
       return (
         <div key={key} className={cn("flex flex-col gap-4", generateColClass(form.col || "12"))}>
+          {label && <p className="input-label">{label}</p>}
+          {clusterError && <small className="input-error-message">{clusterError}</small>}
           {group.map((gIndex) => (
             <div key={gIndex} className={cn("relative pr-8", wrap && "p-4 rounded border", className)}>
               {label && <p className="input-label">{label} {gIndex + 1}</p>}
@@ -284,17 +444,19 @@ export function FormSupervisionComponent({
               {(label || tip) && <div className="mb-2"></div>}
 
               <div className="w-full grid grid-cols-12 gap-4">
-                {innerForms.map((inner, i) => renderInput(inner, i, `${mapName}[${gIndex}]`))}
+                {innerForms.map((inner, i) => renderInput(inner, i, `${groupKey}[${gIndex}]`))}
               </div>
 
-              <ButtonComponent
-                icon={"solid/times"}
-                paint="danger"
-                variant="outline"
-                size="xs"
-                className={cn("absolute top-10 right-2 translate-x-[50%] -translate-y-[50%]", wrap && "translate-x-0 -translate-y-0 top-1 right-1")}
-                onClick={() => removeGroup(gIndex)}
-              />
+              {showDeleteButton && (
+                <ButtonComponent
+                  icon={"solid/times"}
+                  paint="danger"
+                  variant="outline"
+                  size="xs"
+                  className={cn("absolute top-10 right-2 translate-x-[50%] -translate-y-[50%]", wrap && "translate-x-0 -translate-y-0 top-1 right-1")}
+                  onClick={() => removeGroup(gIndex)}
+                />
+              )}
             </div>
           ))}
 
@@ -326,7 +488,9 @@ export function FormSupervisionComponent({
         <Component
           {...(form.construction as any)}
           {...formControl(name)}
-          // autoFocus={key === 0}
+          disabled={ws?.disabled}
+          readOnly={ws?.readonly}
+          name={name}
         />
       </div>
     );
