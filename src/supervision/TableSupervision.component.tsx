@@ -527,7 +527,7 @@ export function TableSupervisionComponent({
       {controlBar?.find((cb) => cb == "CREATE") && (
         <ButtonComponent
           icon={"solid/plus"}
-          className="fixed bottom-24 right-4 w-14 h-14 z-20 md:hidden"
+          className="fixed bottom-16 right-4 w-14 h-14 z-20 md:hidden table-supervision-mobile-create"
           size="lg"
           rounded
           onClick={() => {
@@ -555,6 +555,7 @@ export function TableSupervisionComponent({
         onClose={() => setToggle(`MODAL_FORM_${toggleKey}`, false)}
         title={!!selected ? (l.base.editTitle ? l.base.editTitle() : "Edit") : (l.base.addTitle ? l.base.addTitle() : "Add")}
         className={cn("bg-white", formControl?.modalControl?.className)}
+        {...formControl?.modalControl}
       >
         <div className="p-4">
           {formPage}
