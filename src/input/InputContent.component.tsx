@@ -34,6 +34,7 @@ export type ToolbarControlItem = ToolbarControlName | ReactNode;
 export const DEFAULT_TOOLBAR_CONTROLS: ToolbarControlItem[] = [
   "HEADER",
   "TEXT_SIZE",
+  "COLOR",
   "BOLD",
   "ITALIC",
   "UNDERLINE",
@@ -43,7 +44,6 @@ export const DEFAULT_TOOLBAR_CONTROLS: ToolbarControlItem[] = [
   "ALIGN_RIGHT",
   "ALIGN_JUSTIFY",
   "LINK",
-  "COLOR",
   "LIST_BULLET",
   "LIST_NUMBER",
   "DIVIDER",
