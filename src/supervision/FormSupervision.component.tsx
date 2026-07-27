@@ -438,7 +438,7 @@ export function FormSupervisionComponent({
           {label && <p className="input-label">{label}</p>}
           {clusterError && <small className="input-error-message">{clusterError}</small>}
           {group.map((gIndex) => (
-            <div key={gIndex} className={cn("relative pr-8", wrap && "p-4 rounded border", className)}>
+            <div key={gIndex} className={cn("relative pr-8", wrap && "form-supervision-cluster-item-wrapped", className)}>
               {label && <p className="input-label">{label} {gIndex + 1}</p>}
               {tip && <small className={cn("input-tip")}>{tip}</small>}
               {(label || tip) && <div className="mb-2"></div>}
@@ -453,7 +453,7 @@ export function FormSupervisionComponent({
                   paint="danger"
                   variant="outline"
                   size="xs"
-                  className={cn("absolute top-10 right-2 translate-x-[50%] -translate-y-[50%]", wrap && "translate-x-0 -translate-y-0 top-1 right-1")}
+                  className={cn("form-supervision-cluster-remove-btn", wrap && "form-supervision-cluster-remove-btn-wrapped")}
                   onClick={() => removeGroup(gIndex)}
                 />
               )}
@@ -463,7 +463,7 @@ export function FormSupervisionComponent({
           <div>
             <ButtonComponent
               icon={"solid/plus"}
-              label={`${l.base.add ? l.base.add() : "Add"} ${label || mapName}`}
+              label={`${l.base.add ? l.base.add() : "Add"} ${label || "Lainnya"}`}
               variant="outline"
               size="sm"
               onClick={addGroup}
