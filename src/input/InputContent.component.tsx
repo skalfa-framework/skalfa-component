@@ -2,7 +2,7 @@
 
 import { ReactNode, Ref, useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@skalfa/skalfa-icon";
-import { cn, pcn, useInputHandler, useInputRandomId, useValidation, ValidationRules } from "@utils";
+import { cn, pcn, shortcut, useInputHandler, useInputRandomId, useValidation, ValidationRules } from "@utils";
 import { COLOR_MAP, parseContentToHtml, parseHtmlToContent } from "../wrap/ContentWrapper.component";
 import { ButtonComponent } from "../button/Button.component";
 
@@ -408,7 +408,114 @@ export function InputContentComponent({
     handleEditorChange();
   }, [restoreSelection, saveSelection, handleEditorChange]);
 
+
+
+  const updateActiveStates = useCallback(() => {
+    const sel = window.getSelection();
+    let inH2 = false;
+    if (sel && sel.rangeCount > 0) {
+      let node: Node | null = sel.anchorNode;
+      while (node && node !== editorRef.current) {
+        if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "H2") {
+          inH2 = true;
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+
+    setActiveStates({
+      header: inH2,
+      bold: isCommandActive("bold"),
+      italic: isCommandActive("italic"),
+      underline: isCommandActive("underline"),
+      strikeThrough: isCommandActive("strikeThrough"),
+      justifyLeft: isCommandActive("justifyLeft"),
+      justifyCenter: isCommandActive("justifyCenter"),
+      justifyRight: isCommandActive("justifyRight"),
+      justifyFull: isCommandActive("justifyFull"),
+      insertUnorderedList: isCommandActive("insertUnorderedList"),
+      insertOrderedList: isCommandActive("insertOrderedList"),
+    });
+
+    if (sel && sel.rangeCount > 0) {
+      let node: Node | null = sel.anchorNode;
+      let detectedColor = "normal";
+      let detectedSize: number | null = null;
+      while (node && node !== editorRef.current) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const el = node as HTMLElement;
+          if (el.dataset.color && detectedColor === "normal") {
+            detectedColor = el.dataset.color;
+          }
+          if (el.dataset.size && detectedSize === null) {
+            const parsed = parseInt(el.dataset.size);
+            if (!isNaN(parsed)) detectedSize = parsed;
+          }
+        }
+        node = node.parentNode;
+      }
+      setActiveColor(detectedColor);
+      if (detectedSize !== null) {
+        setTextSize(detectedSize);
+      }
+    }
+  }, [isCommandActive]);
+
+  useEffect(() => {
+    shortcut.register("ctrl+b", () => handleBold(), "Bold text");
+    shortcut.register("ctrl+i", () => handleItalic(), "Italic text");
+    shortcut.register("ctrl+u", () => handleUnderline(), "Underline text");
+    shortcut.register("ctrl+shift+x", () => handleStrikethrough(), "Strikethrough text");
+    shortcut.register("ctrl+k", () => handleLink(), "Insert link");
+
+    return () => {
+      shortcut.unregister("ctrl+b");
+      shortcut.unregister("ctrl+i");
+      shortcut.unregister("ctrl+u");
+      shortcut.unregister("ctrl+shift+x");
+      shortcut.unregister("ctrl+k");
+    };
+  }, [handleBold, handleItalic, handleUnderline, handleStrikethrough, handleLink]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const isMod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+
+    if (isMod && !e.shiftKey && !e.altKey && key === "b") {
+      e.preventDefault();
+      handleBold();
+      updateActiveStates();
+      return;
+    }
+
+    if (isMod && !e.shiftKey && !e.altKey && key === "i") {
+      e.preventDefault();
+      handleItalic();
+      updateActiveStates();
+      return;
+    }
+
+    if (isMod && !e.shiftKey && !e.altKey && key === "u") {
+      e.preventDefault();
+      handleUnderline();
+      updateActiveStates();
+      return;
+    }
+
+    if (isMod && e.shiftKey && !e.altKey && key === "x") {
+      e.preventDefault();
+      handleStrikethrough();
+      updateActiveStates();
+      return;
+    }
+
+    if (isMod && !e.shiftKey && !e.altKey && key === "k") {
+      e.preventDefault();
+      handleLink();
+      return;
+    }
+
     if (e.key === "Backspace") {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
@@ -465,59 +572,7 @@ export function InputContentComponent({
         }
       }
     }
-  }, [handleEditorChange]);
-
-  const updateActiveStates = useCallback(() => {
-    const sel = window.getSelection();
-    let inH2 = false;
-    if (sel && sel.rangeCount > 0) {
-      let node: Node | null = sel.anchorNode;
-      while (node && node !== editorRef.current) {
-        if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "H2") {
-          inH2 = true;
-          break;
-        }
-        node = node.parentNode;
-      }
-    }
-
-    setActiveStates({
-      header: inH2,
-      bold: isCommandActive("bold"),
-      italic: isCommandActive("italic"),
-      underline: isCommandActive("underline"),
-      strikeThrough: isCommandActive("strikeThrough"),
-      justifyLeft: isCommandActive("justifyLeft"),
-      justifyCenter: isCommandActive("justifyCenter"),
-      justifyRight: isCommandActive("justifyRight"),
-      justifyFull: isCommandActive("justifyFull"),
-      insertUnorderedList: isCommandActive("insertUnorderedList"),
-      insertOrderedList: isCommandActive("insertOrderedList"),
-    });
-
-    if (sel && sel.rangeCount > 0) {
-      let node: Node | null = sel.anchorNode;
-      let detectedColor = "normal";
-      let detectedSize: number | null = null;
-      while (node && node !== editorRef.current) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const el = node as HTMLElement;
-          if (el.dataset.color && detectedColor === "normal") {
-            detectedColor = el.dataset.color;
-          }
-          if (el.dataset.size && detectedSize === null) {
-            const parsed = parseInt(el.dataset.size);
-            if (!isNaN(parsed)) detectedSize = parsed;
-          }
-        }
-        node = node.parentNode;
-      }
-      setActiveColor(detectedColor);
-      if (detectedSize !== null) {
-        setTextSize(detectedSize);
-      }
-    }
-  }, [isCommandActive]);
+  }, [handleBold, handleItalic, handleUnderline, handleStrikethrough, handleLink, handleEditorChange, updateActiveStates]);
 
   const renderControlItem = useCallback((item: ToolbarControlItem, index: number) => {
     if (typeof item !== "string") {
@@ -525,19 +580,19 @@ export function InputContentComponent({
     }
 
     switch (item) {
-      case "HEADER":
-        return (
-          <ButtonComponent
-            key={index}
-            variant={activeStates.header ? "light" : "simple"}
-            paint="primary"
-            size="sm"
-            icon="solid/text-h"
-            tips="Header"
-            className={cn("toolbar-btn", activeStates.header && "toolbar-btn-active")}
-            onClick={(e: any) => { e?.preventDefault?.(); handleHeader(); }}
-          />
-        );
+      // case "HEADER":
+      //   return (
+      //     <ButtonComponent
+      //       key={index}
+      //       variant={activeStates.header ? "light" : "simple"}
+      //       paint="primary"
+      //       size="sm"
+      //       icon="solid/text-h"
+      //       tips="Header"
+      //       className={cn("toolbar-btn", activeStates.header && "toolbar-btn-active")}
+      //       onClick={(e: any) => { e?.preventDefault?.(); handleHeader(); }}
+      //     />
+      //   );
       case "TEXT_SIZE":
       case "FONT_SIZE":
         return (
@@ -569,6 +624,41 @@ export function InputContentComponent({
             />
           </div>
         );
+      case "COLOR":
+        return (
+          <div className="relative" key={index}>
+            <ButtonComponent
+              variant={activeColor !== "normal" ? "light" : "simple"}
+              paint="primary"
+              size="sm"
+              label={<div><div className="skcontent-color-dot" style={{ backgroundColor: COLOR_MAP[activeColor]?.css || COLOR_MAP.normal.css }} /></div>}
+              tips={`Text Color (${COLOR_MAP[activeColor]?.label || "Normal"})`}
+              className={cn("toolbar-btn", (activeColor !== "normal" || showColorPicker) && "toolbar-btn-active")}
+              onClick={(e: any) => { e?.preventDefault?.(); setShowColorPicker(!showColorPicker); }}
+            />
+
+            {showColorPicker && (
+              <div className="skcontent-dropdown skcontent-color-picker">
+                {Object.entries(COLOR_MAP).map(([key, info]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    title={info.label}
+                    className={cn(
+                      "skcontent-color-dot",
+                      activeColor === key && "scale-125 border-2 border-primary"
+                    )}
+                    style={{ backgroundColor: info.css }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleColor(key);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
       case "BOLD":
         return (
           <ButtonComponent
@@ -577,7 +667,7 @@ export function InputContentComponent({
             paint="primary"
             size="sm"
             icon="solid/text-b"
-            tips="Bold"
+            tips="Bold (Ctrl+B)"
             className={cn("toolbar-btn", activeStates.bold && "toolbar-btn-active")}
             onClick={(e: any) => { e?.preventDefault?.(); handleBold(); }}
           />
@@ -590,7 +680,7 @@ export function InputContentComponent({
             paint="primary"
             size="sm"
             icon="solid/text-italic"
-            tips="Italic"
+            tips="Italic (Ctrl+I)"
             className={cn("toolbar-btn", activeStates.italic && "toolbar-btn-active")}
             onClick={(e: any) => { e?.preventDefault?.(); handleItalic(); }}
           />
@@ -603,7 +693,7 @@ export function InputContentComponent({
             paint="primary"
             size="sm"
             icon="solid/text-underline"
-            tips="Underline"
+            tips="Underline (Ctrl+U)"
             className={cn("toolbar-btn", activeStates.underline && "toolbar-btn-active")}
             onClick={(e: any) => { e?.preventDefault?.(); handleUnderline(); }}
           />
@@ -616,7 +706,7 @@ export function InputContentComponent({
             paint="primary"
             size="sm"
             icon="solid/text-slash"
-            tips="Strikethrough"
+            tips="Strikethrough (Ctrl+Shift+X)"
             className={cn("toolbar-btn", activeStates.strikeThrough && "toolbar-btn-active")}
             onClick={(e: any) => { e?.preventDefault?.(); handleStrikethrough(); }}
           />
@@ -681,7 +771,7 @@ export function InputContentComponent({
               paint="primary"
               size="sm"
               icon="solid/link"
-              tips="Link"
+              tips="Link (Ctrl+K)"
               className={cn("toolbar-btn", showLinkInput && "toolbar-btn-active")}
               onClick={(e: any) => { e?.preventDefault?.(); handleLink(); }}
             />
@@ -712,41 +802,6 @@ export function InputContentComponent({
                   icon="solid/check"
                   onClick={(e: any) => { e?.preventDefault?.(); handleLinkSubmit(); }}
                 />
-              </div>
-            )}
-          </div>
-        );
-      case "COLOR":
-        return (
-          <div className="relative" key={index}>
-            <ButtonComponent
-              variant={activeColor !== "normal" ? "light" : "simple"}
-              paint="primary"
-              size="sm"
-              label={<div><div className="skcontent-color-dot" style={{ backgroundColor: COLOR_MAP[activeColor]?.css || COLOR_MAP.normal.css }} /></div>}
-              tips={`Text Color (${COLOR_MAP[activeColor]?.label || "Normal"})`}
-              className={cn("toolbar-btn", (activeColor !== "normal" || showColorPicker) && "toolbar-btn-active")}
-              onClick={(e: any) => { e?.preventDefault?.(); setShowColorPicker(!showColorPicker); }}
-            />
-
-            {showColorPicker && (
-              <div className="skcontent-dropdown skcontent-color-picker">
-                {Object.entries(COLOR_MAP).map(([key, info]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    title={info.label}
-                    className={cn(
-                      "skcontent-color-dot",
-                      activeColor === key && "scale-125 border-2 border-primary"
-                    )}
-                    style={{ backgroundColor: info.css }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleColor(key);
-                    }}
-                  />
-                ))}
               </div>
             )}
           </div>
