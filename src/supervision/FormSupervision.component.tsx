@@ -29,6 +29,10 @@ import {
   InputDatetimeComponent,
   InputTimeComponent,
   InputImageComponent,
+  TextareaComponent,
+  TextareaProps,
+  InputContentComponent,
+  InputContentProps,
 } from "../";
 import { Icon } from "@skalfa/skalfa-icon";
 import { useLang } from "@skalfa/skalfa-lang";
@@ -85,6 +89,8 @@ type ConstructionMap = {
   select            :  SelectProps;
   "enter-password"  :  InputPasswordProps;
   otp               :  InputOtpProps;
+  textarea          :  TextareaProps;
+  content           :  InputContentProps;
   custom            :  formCustomConstructionProps;
 };
 
@@ -366,6 +372,8 @@ export function FormSupervisionComponent({
     "enter-password"  :  InputPasswordComponent,
     otp               :  InputOtpComponent,
     image             :  InputImageComponent,
+    textarea          :  TextareaComponent,
+    content           :  InputContentComponent,
     cluster           :  () => null,
     custom            :  () => null,
   };
