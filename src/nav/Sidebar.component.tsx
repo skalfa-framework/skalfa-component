@@ -17,6 +17,7 @@ export interface SidebarItemProps {
   leftContent   ?:  any;
   rightContent  ?:  any;
   path          ?:  string;
+  prefetch      ?:  boolean;
   items         ?:  SidebarItemProps[];
   className     ?:  string;
 };
@@ -34,6 +35,7 @@ export interface sidebarProps {
   footer    ?:  any;
   items     ?:  SidebarHeadItemProps[];
   basePath  ?:  string;
+  prefetch  ?:  boolean;
 
   /** Use custom class with: "backdrop::", "head-item::", "item::", "child-item::". */
   className?: string;
@@ -41,6 +43,7 @@ export interface sidebarProps {
 
 interface sidebarWrapperProps {
   path      ?:  string;
+  prefetch  ?:  boolean;
   onClick   ?:  () => void;
   children  ?:  any;
 }
@@ -50,11 +53,12 @@ interface sidebarWrapperProps {
 
 function SidebarWrapper({
   path,
+  prefetch,
   children,
   onClick,
 } : sidebarWrapperProps) {
   if (path) {
-    return <Link href={path}>{children}</Link>;
+    return <Link href={path} prefetch={prefetch} onClick={() => onClick?.()}>{children}</Link>;
   } else {
     return <div onClick={() => onClick?.()}>{children}</div>;
   }
@@ -68,6 +72,7 @@ export function SidebarComponent({
   footer,
   items,
   basePath,
+  prefetch,
   className = "",
 } : sidebarProps) {
   const pathName               =  usePathname();
@@ -189,6 +194,7 @@ export function SidebarComponent({
                             path={
                               menu?.path ? `${basePath || ""}${menu?.path}` : ""
                             }
+                            prefetch={menu?.prefetch ?? prefetch}
                             onClick={() =>
                               setShow(`${menu_head_key}.${menu_key}`)
                             }
@@ -238,6 +244,7 @@ export function SidebarComponent({
                                             ? `${basePath || ""}${child?.path}`
                                             : ""
                                         }
+                                        prefetch={child?.prefetch ?? menu?.prefetch ?? prefetch}
                                         onClick={() =>
                                           setShow(
                                             `${menu_head_key}.${menu_key}.${menu_child_key}`,
