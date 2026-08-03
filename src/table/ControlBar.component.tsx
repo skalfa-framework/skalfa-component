@@ -123,7 +123,7 @@ export function ControlBarComponent({
     <>
       <div className={cn("control-bar", className)}>
         {(isSm ? [
-          ...(options?.filter((op) => op == "SEARCH" || op == "REFRESH") || []), 
+          ...(options?.filter((op) => op == "SEARCH") || []), 
           ...(options && options?.length > 1 ? ['MOBILE_OPTION'] : [])
         ] : options)?.map((option: ControlBarOptionType, key: number) => {
           {

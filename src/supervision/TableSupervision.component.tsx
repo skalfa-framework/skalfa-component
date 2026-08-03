@@ -379,9 +379,19 @@ export function TableSupervisionComponent({
         submitControl={(fetchControl as ApiType).path ? { 
             path    :  `${(fetchControl as ApiType).path}/${(selected as { id: number })?.id || "" }`,
             method  :  !(selected as { id: number })?.id ? "POST"                                      :  "PUT",
+            bearer  :  (fetchControl as ApiType).bearer,
+            headers :  {
+              ...(fetchControl as ApiType).headers,
+              ...(formControl?.contentType ? { "Content-Type": formControl.contentType } : {}),
+            },
           }  :  (fetchControl as ApiType).url ? { 
             url     :  `${(fetchControl as ApiType).url}/${(selected as { id: number })?.id || ""}`,
             method  :  !(selected as { id: number })?.id ? "POST"                                    :  "PUT",
+            bearer  :  (fetchControl as ApiType).bearer,
+            headers :  {
+              ...(fetchControl as ApiType).headers,
+              ...(formControl?.contentType ? { "Content-Type": formControl.contentType } : {}),
+            },
           }  : { idb: (fetchControl as ({ idb: UseResourceIdb }))?.idb }
         }
         fields={fields?.filter((f: any) => f.visibility ? !(selected as { id: number })?.id ? ["*", "create"]?.includes(f.visibility) : ["*", "update"]?.includes(f.visibility) : true) as FormType[]}
