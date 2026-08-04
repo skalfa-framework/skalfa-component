@@ -44,7 +44,7 @@ export function parseInlineFormats(text: string): string {
 export function parseContentToHtml(content: string): string {
   if (!content) return "";
 
-  const lines = content.split("\n");
+  const lines = content.replace(/\r/g, "").split("\n");
   const htmlParts: string[] = [];
   let i = 0;
 
@@ -66,26 +66,34 @@ export function parseContentToHtml(content: string): string {
 
     if (line.match(/^\[list:bullet\]/)) {
       const items: string[] = [];
+      let matchedAny = false;
       while (i < lines.length) {
         const bm = lines[i].match(/^\[list:bullet\](.*?)\[list\]$/);
         if (!bm) break;
+        matchedAny = true;
         items.push(`<li>${parseInlineFormats(bm[1])}</li>`);
         i++;
       }
-      htmlParts.push(`<ul>${items.join("")}</ul>`);
-      continue;
+      if (matchedAny) {
+        htmlParts.push(`<ul>${items.join("")}</ul>`);
+        continue;
+      }
     }
 
     if (line.match(/^\[list:number\]/)) {
       const items: string[] = [];
+      let matchedAny = false;
       while (i < lines.length) {
         const nm = lines[i].match(/^\[list:number\](.*?)\[list\]$/);
         if (!nm) break;
+        matchedAny = true;
         items.push(`<li>${parseInlineFormats(nm[1])}</li>`);
         i++;
       }
-      htmlParts.push(`<ol>${items.join("")}</ol>`);
-      continue;
+      if (matchedAny) {
+        htmlParts.push(`<ol>${items.join("")}</ol>`);
+        continue;
+      }
     }
 
     const alignMatch = line.match(/^\[align:(left|center|right|justify)\](.*?)\[align\]$/);
