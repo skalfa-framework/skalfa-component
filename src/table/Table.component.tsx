@@ -36,6 +36,8 @@ export interface TableProps {
   id                        ?: string;
   
   controlBar                ?:  false | ControlBarOptionType[];
+  filterBar                 ?: ReactNode;
+
 
   columns                    :  TableColumnType[];
   data                       :  Record<string, any>[];
@@ -76,6 +78,7 @@ export interface TableProps {
 export function TableComponent({
   id,
   controlBar,
+  filterBar,
   columns,
   data,
   pagination,
@@ -289,6 +292,8 @@ export function TableComponent({
           className={pcn<CT>(className, "controller-bar") || ""}
         />
       )}
+
+      {filterBar}
 
       <div className="relative">
         <ScrollContainerComponent

@@ -75,6 +75,7 @@ export type TableSupervisionProps = {
   noIndex              ?: boolean;
   actionBulkingControl ?:  TableProps["actionBulking"],
   controlBar           ?:  (ControlBarOptionType | "CREATE" | "IMPORT" | "EXPORT" | "PRINT")[];
+  filterBar            ?: ReactNode;
   responsiveControl    ?:  {
     mobile                 ?:  boolean | {
       item                 ?:  (item: Record<string, any>, key: number) => ReactNode,
@@ -98,6 +99,7 @@ export function TableSupervisionComponent({
   actionBulkingControl,
   block,
   controlBar,
+  filterBar,
   noIndex,
   responsiveControl,
   urlParam,
@@ -500,6 +502,7 @@ export function TableSupervisionComponent({
           ...(columns?.filter((c) => !!(c as { sortable?: any }).sortable)?.length ? ["SORT"] : []),
           "SELECTABLE", "REFRESH",
         ]}
+        filterBar={filterBar}
         columns={columns as TableColumnType[]}
         data={dataTables}
         onRowClick={onRowClick ? onRowClick : detailControl != false ? (e) => {
