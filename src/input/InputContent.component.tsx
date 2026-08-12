@@ -574,6 +574,83 @@ export function InputContentComponent({
     }
   }, [handleBold, handleItalic, handleUnderline, handleStrikethrough, handleLink, handleEditorChange, updateActiveStates]);
 
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    const pastedText = e.clipboardData.getData("text/plain");
+    if (!pastedText) return;
+
+    const urlRegex = /(\b(?:https?:\/\/|www\.)[^\s()<>]+(?:\([\w\d]+\)|[^.,?;:"')\s]))/gi;
+
+    if (urlRegex.test(pastedText)) {
+      e.preventDefault();
+
+      const escapeHtml = (text: string) => {
+        return text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      };
+
+      const tokens: string[] = [];
+      let lastIndex = 0;
+      let match;
+      urlRegex.lastIndex = 0;
+
+      while ((match = urlRegex.exec(pastedText)) !== null) {
+        if (match.index > lastIndex) {
+          tokens.push(escapeHtml(pastedText.substring(lastIndex, match.index)));
+        }
+
+        const url = match[0];
+        let href = url;
+        if (url.toLowerCase().startsWith("www.")) {
+          href = "https://" + url;
+        }
+
+        const escapedHref = escapeHtml(href);
+        const escapedUrl = escapeHtml(url);
+        tokens.push(`<a href="${escapedHref}" class="text-primary underline" data-link="${escapedHref}" target="_blank" rel="noopener">${escapedUrl}</a>`);
+
+        lastIndex = urlRegex.lastIndex;
+      }
+
+      if (lastIndex < pastedText.length) {
+        tokens.push(escapeHtml(pastedText.substring(lastIndex)));
+      }
+
+      const htmlContent = tokens.join("").replace(/\n/g, "<br>");
+
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = htmlContent;
+
+      const fragment = document.createDocumentFragment();
+      let child: Node | null;
+      while ((child = tempDiv.firstChild)) {
+        fragment.appendChild(child);
+      }
+
+      const lastNode = fragment.lastChild;
+      range.insertNode(fragment);
+
+      if (lastNode) {
+        const newRange = document.createRange();
+        newRange.setStartAfter(lastNode);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      }
+
+      saveSelection();
+      handleEditorChange();
+    }
+  }, [saveSelection, handleEditorChange]);
+
   const renderControlItem = useCallback((item: ToolbarControlItem, index: number) => {
     if (typeof item !== "string") {
       return <div key={index}>{item}</div>;
@@ -945,6 +1022,7 @@ export function InputContentComponent({
             updateActiveStates();
           }}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onMouseUp={() => {
             saveSelection();
             updateActiveStates();

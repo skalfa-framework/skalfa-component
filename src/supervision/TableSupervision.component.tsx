@@ -64,7 +64,7 @@ export type TableSupervisionProps = {
       shortcut       ?:  { key: string, description: string },
       on             ?:  (item: Record<string, any>) => boolean,
     } | ((
-      row              :  object,
+      row              :  Record<string, any>,
       setModal        ?:  (type: "EDIT" | "DELETE") => void,
       setDataSelected ?:  () => void,
       reset           ?:  () => void,
