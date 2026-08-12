@@ -37,7 +37,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
 
   value,
   disabled,
-  aspect = "1/1",
+  aspect,
   invalid,
   validations,
 
@@ -58,6 +58,10 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
 
   const inputHandler                         =  useInputHandler(name, value, validations, register, true, unregister);
   const [invalidMessage, setInvalidMessage]  =  useValidation(inputHandler.value, validations, invalid, inputHandler.idle);
+
+  const isCroppingEnabled = !!aspect;
+  const currentAspect = aspect || "1/1";
+  const containerAspect = (preview && !isCroppingEnabled) ? undefined : currentAspect;
 
   useEffect(() => {
     if (value) {
@@ -91,7 +95,13 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
       return;
     }
 
-    openCropper(file);
+    if (isCroppingEnabled) {
+      openCropper(file);
+    } else {
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      onChange?.(file);
+    }
   };
 
   const onCropDone = (file: File) => {
@@ -117,7 +127,15 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
     setDrag(false);
 
     const file = e.dataTransfer.files?.[0];
-    file && openCropper(file);
+    if (!file) return;
+
+    if (isCroppingEnabled) {
+      openCropper(file);
+    } else {
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      onChange?.(file);
+    }
   };
 
   return (
@@ -157,8 +175,9 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
             pcn<CT>(className, "input")
           )}
           style={{
-            aspectRatio: aspect,
-            backgroundImage: preview ? `url(${preview})` : undefined,
+            position: "relative",
+            aspectRatio: containerAspect,
+            backgroundImage: preview && containerAspect ? `url(${preview})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -170,10 +189,24 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
           onDragLeave={() => setDrag(false)}
           onDrop={onDropFile}
         >
-          <div className="input-image-dropzone-content">
-            <Icon icon={drag ? "solid/hand-holding" : "solid/images"} className="text-3xl" />
-            <p className="input-image-dropzone-text">{drag ? "Letakkan di sini" : preview  ? "Klik atau seret untuk ganti Gambar" : "Klik atau seret gambar"}</p>
-          </div>
+          {preview && !containerAspect ? (
+            <div className="relative group w-full h-full flex items-center justify-center">
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-auto max-h-[400px] object-contain rounded-lg"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center text-white rounded-lg">
+                <Icon icon="solid/images" className="text-3xl mb-2" />
+                <p className="text-xs text-center">Klik atau seret untuk ganti Gambar</p>
+              </div>
+            </div>
+          ) : (
+            <div className="input-image-dropzone-content">
+              <Icon icon={drag ? "solid/hand-holding" : "solid/images"} className="text-3xl" />
+              <p className="input-image-dropzone-text">{drag ? "Letakkan di sini" : preview  ? "Klik atau seret untuk ganti Gambar" : "Klik atau seret gambar"}</p>
+            </div>
+          )}
 
           <input
             id={randomId}
@@ -209,7 +242,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
             <div className="p-4">
               <CanvasCropper
                 src={cropSrc}
-                aspect={eval(aspect.replace(":", "/"))}
+                aspect={eval(currentAspect.replace(":", "/"))}
                 onDone={onCropDone}
               />
             </div>
@@ -221,7 +254,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
             <div className="p-4">
               <CanvasCropper
                 src={cropSrc}
-                aspect={eval(aspect.replace(":", "/"))}
+                aspect={eval(currentAspect.replace(":", "/"))}
                 onDone={onCropDone}
               />
             </div>
