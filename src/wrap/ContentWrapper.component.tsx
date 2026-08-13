@@ -15,6 +15,15 @@ export const COLOR_MAP: Record<string, { label: string; tw: string; css: string 
   danger:    { label: "Danger",    tw: "text-danger",           css: "var(--color-danger, #ef4444)"           },
 };
 
+export function formatLinkUrl(url: string): string {
+  if (!url) return "";
+  const hasProtocol = /^(https?:\/\/|\/\/|\/|#|mailto:|tel:|javascript:)/i.test(url);
+  if (hasProtocol) {
+    return url;
+  }
+  return `https://${url}`;
+}
+
 export function parseInlineFormats(text: string): string {
   if (!text) return "";
   let result = text;
@@ -30,7 +39,8 @@ export function parseInlineFormats(text: string): string {
   });
 
   result = result.replace(/\[link:(.*?)\](.*?)\[link\]/g, (_, url, content) => {
-    return `<a href="${url}" class="text-primary underline" data-link="${url}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+    const formattedUrl = formatLinkUrl(url);
+    return `<a href="${formattedUrl}" class="text-primary underline" data-link="${formattedUrl}" target="_blank" rel="noopener noreferrer">${content}</a>`;
   });
 
   result = result.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
