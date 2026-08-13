@@ -44,7 +44,7 @@ export function parseInlineFormats(text: string): string {
   });
 
   result = result.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  result = result.replace(/\/\/(.*?)\/\//g, "<em>$1</em>");
+  result = result.replace(/(?<![:"'=])\/\/(.*?)(?<![:"'=])\/\//g, "<em>$1</em>");
   result = result.replace(/__(.*?)__/g, "<u>$1</u>");
   result = result.replace(/--(.*?)--/g, "<s>$1</s>");
 
