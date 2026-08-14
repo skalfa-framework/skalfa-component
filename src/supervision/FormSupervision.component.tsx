@@ -116,7 +116,7 @@ export interface FormType<T extends TypeKeys = keyof ConstructionMap> {
   className     ?:  string;
   construction  ?:  ConstructionMap[T];
   type          ?:  T;
-  onHide        ?:  (values: Record<string, any>) => boolean;
+  onHide        ?:  (values: Record<string, any>, prefix?: string) => boolean;
   onWatch       ?:  (ctx: WatchContext) => WatchAction | undefined;
 }
 
@@ -283,17 +283,18 @@ export function FormSupervisionComponent({
     const groups: Record<string, Set<number>> = {};
 
     Object.keys(defaults).forEach((key) => {
-      const match = key.match(/^(.+?)\[(\d+)\]/);
-      if (!match) return;
-
-      const [, groupKey, indexStr] = match;
-      const index = Number(indexStr);
-
-      if (!groups[groupKey]) {
-        groups[groupKey] = new Set();
+      const regex = /([a-zA-Z0-9_]+)\[(\d+)\]/g;
+      let match;
+      let currentPrefix = "";
+      while ((match = regex.exec(key)) !== null) {
+        const groupKey = currentPrefix ? `${currentPrefix}.${match[1]}` : match[1];
+        const index = parseInt(match[2], 10);
+        if (!groups[groupKey]) {
+          groups[groupKey] = new Set();
+        }
+        groups[groupKey].add(index);
+        currentPrefix = `${groupKey}[${index}]`;
       }
-
-      groups[groupKey].add(index);
     });
 
     return Object.fromEntries(
@@ -385,7 +386,7 @@ export function FormSupervisionComponent({
     const valMap: Record<string, any> = {};
     values.forEach((v) => { valMap[v.name] = v.value; });
 
-    if (form?.onHide?.(valMap)) return null;
+    if (form?.onHide?.(valMap, prefix)) return null;
 
     const ws = watchState[name];
     if (ws?.hidden) return null;
