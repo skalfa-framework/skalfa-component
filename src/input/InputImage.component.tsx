@@ -237,7 +237,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
       )}
 
       {!isSm ? (
-        <ModalComponent show={openCrop} onClose={onCropCancel} title="Sesuaikan Gambar" className="w-max max-w-[350px]">
+        <ModalComponent show={openCrop} onClose={onCropCancel} title="Sesuaikan Gambar" className="w-max">
           {cropSrc && (
             <div className="p-4">
               <CanvasCropper
