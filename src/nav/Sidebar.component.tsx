@@ -209,7 +209,7 @@ export function SidebarComponent({
                             >
                               <div className="flex gap-2 items-center">
                                 {menu?.leftContent}
-                                <span className="font-medium">
+                                <span className="font-medium sidebar-item-label">
                                   {menu?.label}
                                 </span>
                               </div>
@@ -263,7 +263,7 @@ export function SidebarComponent({
                                         >
                                           <div className="flex gap-2 items-center">
                                             {child?.leftContent}
-                                            <span className="text-[10px] font-medium">
+                                            <span className="text-[10px] font-medium sidebar-child-item-label">
                                               {child?.label}
                                             </span>
                                           </div>
@@ -305,7 +305,7 @@ export function SidebarComponent({
   );
 }
 
-export function SidebarContentComponent({ children, id }: { children: ReactNode, id: string }) {
+export function SidebarContentComponent({ children, id }: { children: ReactNode, id?: string }) {
   const { toggle }  =  useToggleContext()
 
   return (
