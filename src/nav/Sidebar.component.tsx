@@ -305,9 +305,11 @@ export function SidebarComponent({
   );
 }
 
-export function SidebarContentComponent({ children }: { children: ReactNode }) {
+export function SidebarContentComponent({ children, id }: { children: ReactNode, id: string }) {
+  const { toggle }  =  useToggleContext()
+
   return (
-    <main className="w-full sm:ml-14 sm:w-[calc(100vw-56px)] lg:ml-[280px] lg:w-[calc(100vw-280px)] min-h-screen overflow-x-hidden">
+    <main className={cn("sidebar-main-content", toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "sidebar-main-content-active" : "sidebar-main-content-inactive")}>
       {children}
     </main>
   );
