@@ -143,7 +143,7 @@ export function SidebarComponent({
       <aside 
         className={cn(
           "sidebar-base scroll-sm",
-          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "w-full sm:w-[280px]" : "w-0 sm:w-14 lg:w-[280px]",
+          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "sidebar-active" : "sidebar-inactive",
           pcn<CT>(className, "base"),
         )}
       >
