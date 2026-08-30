@@ -127,7 +127,7 @@ export function SidebarComponent({
   }, []);
 
   useEffect(() => {
-    setToggle(`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`, false)
+    setToggle(`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`, false)
   }, [pathName]);
 
   return (
@@ -135,32 +135,32 @@ export function SidebarComponent({
       <div 
         className={cn(
           "sidebar-backdrop",
-          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "scale-100 lg:scale-0" : "scale-0",
+          toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "scale-100 lg:scale-0" : "scale-0",
           pcn<CT>(className, "backdrop"),
         )} 
-        onClick={() => setToggle(`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`)}
+        onClick={() => setToggle(`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`)}
       ></div>
       <aside 
         className={cn(
           "sidebar-base scroll-sm",
-          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "sidebar-active" : "sidebar-inactive",
+          toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "sidebar-active" : "sidebar-inactive",
           pcn<CT>(className, "base"),
         )}
       >
-        <div className={toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "block" : "hidden lg:block"}>
+        <div className={toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "block" : "hidden lg:block"}>
           {head}
         </div>
 
         <div 
-          className={toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "hidden" : "flex justify-center pt-4 h-full lg:hidden"}
-          onClick={() => setToggle(`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`)}
+          className={toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "hidden" : "flex justify-center pt-4 h-full lg:hidden"}
+          onClick={() => setToggle(`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`)}
         >
           <Icon icon={"solid/bars"} />
         </div>
 
         <nav className={cn(
           "flex flex-col flex-1 overflow-y-auto overflow-x-hidden", 
-          toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "w-full" : "w-0 lg:w-full",
+          toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "w-full" : "w-0 lg:w-full",
         )}>
           {items?.map((menu_head, menu_head_key) => {
             return (
@@ -297,7 +297,7 @@ export function SidebarComponent({
           })}
         </nav>
 
-        <div className={toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "block" : "hidden lg:block"}>
+        <div className={toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "block" : "hidden lg:block"}>
           {footer}
         </div>
       </aside>
@@ -309,7 +309,7 @@ export function SidebarContentComponent({ children, id }: { children: ReactNode,
   const { toggle }  =  useToggleContext()
 
   return (
-    <main className={cn("sidebar-main-content", toggle[`SIDEBAR${id ? "" : "_" + id?.toUpperCase()}`] ? "sidebar-main-content-active" : "sidebar-main-content-inactive")}>
+    <main className={cn("sidebar-main-content", toggle[`SIDEBAR${id ? ("_" + id?.toUpperCase()) : ""}`] ? "sidebar-main-content-active" : "sidebar-main-content-inactive")}>
       {children}
     </main>
   );
