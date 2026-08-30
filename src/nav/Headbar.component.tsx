@@ -52,7 +52,7 @@ export function HeadbarComponent({
               )
             }
           >
-            <Icon icon="solid/sidebar" className="text-xl headbar-toggle-icon headbar-icon" />
+            <Icon icon="outline/sidebar-close" className="text-xl headbar-toggle-icon headbar-icon" />
           </div>
         )}
         {backHref && (
