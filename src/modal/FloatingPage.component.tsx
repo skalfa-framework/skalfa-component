@@ -15,6 +15,7 @@ export interface FloatingPageProps {
   title     ?:  string | ReactNode;
   children  ?:  any;
   tip       ?:  string | ReactNode;
+  header    ?:  false | ReactNode;
   footer    ?:  string | ReactNode;
   size      ?:  string | number;
   maxSize   ?:  string | number;
@@ -33,6 +34,7 @@ export function FloatingPageComponent({
   children,
   tip,
   footer,
+  header,
   className = "",
   size,
   maxSize,
@@ -98,22 +100,25 @@ export function FloatingPageComponent({
           pcn<CT>(className, "base"),
         )}
       >
-        <div className={cn("modal-header", pcn<CT>(className, "header"))}>
-          {title && (
-            <div>
-              <h6 className="modal-title">{title}</h6>
-              {tip && <p className="modal-tip">{tip}</p>}
-            </div>
-          )}
+        {(header == undefined || header != false) && (
+          <div className={cn("modal-header", pcn<CT>(className, "header"))}>
+            {title && (
+              <div>
+                <h6 className="modal-title">{title}</h6>
+                {tip && <p className="modal-tip">{tip}</p>}
+              </div>
+            )}
 
-          <ButtonComponent
-            icon="solid/times"
-            variant="simple"
-            paint="danger"
-            onClick={() => onClose()}
-          />
-        </div>
-        
+            <ButtonComponent
+              icon="solid/times"
+              variant="simple"
+              paint="danger"
+              onClick={() => onClose()}
+            />
+          </div>
+        )}
+
+        {!!header && header}
 
         {show && children}
 
