@@ -36,6 +36,21 @@ function sizeToPx(value: string | number | undefined): number {
   return parseFloat(v) || 0;
 }
 
+function findScrollableParent(target: HTMLElement | null, stopAt: HTMLElement | null): HTMLElement | null {
+  if (typeof window === "undefined") return null;
+  let el = target;
+  while (el && el !== stopAt && el !== document.body) {
+    const style = window.getComputedStyle(el);
+    const overflowY = style.overflowY;
+    const canScroll = (overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight;
+    if (canScroll) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
 const BottomSheet = ({
   show,
   children,
@@ -52,22 +67,19 @@ const BottomSheet = ({
   const lastY     =  useRef(0);
   const dragging  =  useRef(false);
 
-  const [offset, setOffset]                        =  useState(0);
-  const [isExpanded, setIsExpanded]                =  useState(false);
-  const [scrollLocked, setScrollLocked]            =  useState(false);
-  const [contentScrollable, setContentScrollable]  =  useState(false);
+  const [offset, setOffset]          =  useState(0);
+  const [isExpanded, setIsExpanded]  =  useState(false);
+  const [isDragging, setIsDragging]  =  useState(false);
+  const isClosing                    =  useRef(false);
 
-  const realMaxSize = maxSize ?? size;
+  const canExpand = Boolean(maxSize) && sizeToPx(maxSize) > sizeToPx(size);
+  const realMaxSize = canExpand && (typeof maxSize === "number" || typeof maxSize === "string") ? maxSize : size;
+  const canDragUp = canExpand && !isExpanded;
 
   const clamp = (v: number) => {
     const max = window.innerHeight;
-    return Math.max(-200, Math.min(v, max));
-  };
-
-  const animateTo = (target: number, onFinish?: () => void) => {
-    lastY.current = target;
-    setOffset(clamp(target));
-    onFinish?.();
+    const min = canDragUp ? -200 : 0;
+    return Math.max(min, Math.min(v, max));
   };
 
   useEffect(() => {
@@ -75,33 +87,40 @@ const BottomSheet = ({
       lastY.current = 0;
       setOffset(0);
       setIsExpanded(false);
+      isClosing.current = false;
     } else {
       const t = setTimeout(() => {
         lastY.current = 0;
         setOffset(0);
         setIsExpanded(false);
-      }, 250);
+      }, 300);
       return () => clearTimeout(t);
     }
   }, [show]);
 
-  const onStart = (clientY: number) => {
-    const sc  =  scrollRef.current;
+  const onStart = (clientY: number, target: EventTarget | null) => {
+    const targetEl = target as HTMLElement | null;
 
-    if (sc && sc.scrollTop < 0) {
-      setScrollLocked(true);
+    // Abaikan drag jika menekan elemen interaktif seperti button, input, link
+    if (targetEl?.closest("button, input, textarea, select, a, [role='button']")) {
+      dragging.current = false;
       return;
     }
 
-    setScrollLocked(false);
+    // Abaikan drag jika sentuhan berada di dalam elemen yang sedang bisa di-scroll
+    const scrollableParent = findScrollableParent(targetEl, sheetRef.current);
+    if (scrollableParent) {
+      dragging.current = false;
+      return;
+    }
 
     dragging.current  =  true;
     startY.current    =  clientY;
     lastY.current     =  offset;
+    setIsDragging(true);
   };
 
   const onMove = (clientY: number) => {
-    if (scrollLocked) return;
     if (!dragging.current) return;
 
     const diff = clientY - startY.current;
@@ -109,41 +128,48 @@ const BottomSheet = ({
   };
 
   const onEnd = () => {
-    if (scrollLocked) {
-      setScrollLocked(false);
-      return;
-    }
-
     if (!dragging.current) return;
     dragging.current = false;
+    setIsDragging(false);
 
     const current = offset;
 
     const thresholdDown = 120;
     const thresholdUp = -40;
 
-    if (!isExpanded && current < thresholdUp && maxSize !== undefined) {
+    // 1. Expand ke maxSize jika di-drag ke atas melebihi threshold
+    if (!isExpanded && current < thresholdUp && canExpand) {
       setIsExpanded(true);
-      animateTo(0);
+      setOffset(0);
+      lastY.current = 0;
       return;
     }
 
+    // 2. Collapse kembali ke size normal jika sedang expanded dan di-drag ke bawah
     if (isExpanded && current > thresholdDown) {
       setIsExpanded(false);
-      animateTo(0);
+      setOffset(0);
+      lastY.current = 0;
       return;
     }
 
+    // 3. Menutup bottom sheet jika di-drag ke bawah melebihi threshold
     if (!isExpanded && current > thresholdDown) {
-      animateTo(window.innerHeight, () => {
+      if (isClosing.current) return;
+      isClosing.current = true;
+      setOffset(window.innerHeight);
+      setTimeout(() => {
         onClose();
         lastY.current = 0;
         setOffset(0);
-      });
+        isClosing.current = false;
+      }, 300);
       return;
     }
 
-    animateTo(0);
+    // 4. Kembali ke posisi 0 (bouncing back smoothly)
+    setOffset(0);
+    lastY.current = 0;
   };
 
   const collapsedPx = sizeToPx(size);
@@ -152,25 +178,18 @@ const BottomSheet = ({
   const topPx = isExpanded ? window.innerHeight - expandedPx : window.innerHeight - collapsedPx;
 
   const bindTouch = {
-    onTouchStart : (e: TouchEvent) => onStart(e.touches[0].clientY),
+    onTouchStart : (e: TouchEvent) => onStart(e.touches[0].clientY, e.target),
     onTouchMove  : (e: TouchEvent) => onMove(e.touches[0].clientY),
-    onTouchEnd   :  () => onEnd(),
+    onTouchEnd   : () => onEnd(),
+    onTouchCancel: () => onEnd(),
   };
 
   const bindMouse = {
-    onMouseDown   :  (e: MouseEvent) => onStart(e.clientY),
-    onMouseMove   :  (e: MouseEvent) => dragging.current && onMove(e.clientY),
-    onMouseUp     :  () => onEnd(),
-    onMouseLeave  :  () => onEnd(),
+    onMouseDown   : (e: MouseEvent) => onStart(e.clientY, e.target),
+    onMouseMove   : (e: MouseEvent) => dragging.current && onMove(e.clientY),
+    onMouseUp     : () => onEnd(),
+    onMouseLeave  : () => onEnd(),
   };
-
-  useEffect(() => {
-    const sc = scrollRef.current;
-    if (!sc) return;
-
-    const canScroll = sc.scrollHeight > sc.clientHeight;
-    setContentScrollable(canScroll);
-  }, [show, size, maxSize]);
 
   useEffect(() => {
     if (show) {
@@ -196,8 +215,8 @@ const BottomSheet = ({
     <>
       <div
         className={cn(
-          "modal-backdrop",
-          !show && "translate-y-full",
+          "modal-backdrop transition-opacity duration-300",
+          !show && "opacity-0 pointer-events-none translate-y-full",
           pcn<CT>(className, "backdrop"),
         )}
         onClick={onClose}
@@ -209,13 +228,19 @@ const BottomSheet = ({
         style={{
           top: show ? `${topPx}px` : "150vh",
           transform: `translateY(${offset}px)`,
-          touchAction: "none",
+          transition: isDragging
+            ? "none"
+            : "top 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1)",
+          touchAction: "pan-y",
         }}
         {...bindTouch}
         {...bindMouse}
       >
         <div className="bottom-sheet-container">
-          <div className="bottom-sheet-handle-wrapper">
+          <div
+            className="bottom-sheet-handle-wrapper"
+            style={{ touchAction: "none" }}
+          >
             <div className="bottom-sheet-handle" />
           </div>
 
@@ -224,7 +249,10 @@ const BottomSheet = ({
             className="overflow-y-auto"
             style={{
               height: isExpanded ? realMaxSize : size,
-              touchAction: contentScrollable ? "auto" : "none",
+              transition: isDragging
+                ? "none"
+                : "height 300ms cubic-bezier(0.16, 1, 0.3, 1)",
+              touchAction: "pan-y",
               overscrollBehaviorY: "contain",
             }}
           >
