@@ -107,7 +107,7 @@ export type WatchAction = {
   hidden    ?: boolean
   value     ?: any
   required  ?: boolean
-  readonly  ?: boolean
+  readOnly  ?: boolean
   reset     ?: boolean
 }
 
@@ -389,7 +389,8 @@ export function FormSupervisionComponent({
     if (form?.onHide?.(valMap, prefix)) return null;
 
     const ws = watchState[name];
-    if (ws?.hidden) return null;
+    const isHidden = (form.construction as any)?.hidden ?? ws?.hidden;
+    if (isHidden) return null;
 
     if (inputType === "cluster") {
       const { name: mapName, fields: innerForms, label, tip, wrap, className, min } = form.construction as ClusterConstruction;
@@ -492,13 +493,17 @@ export function FormSupervisionComponent({
     }
 
     const Component = inputMap[inputType] || InputComponent;
+    const construction = (form.construction as any) || {};
+    const disabled = construction.disabled ?? ws?.disabled;
+    const readOnly = construction.readOnly ?? ws?.readOnly;
+
     return (
       <div key={key} className={cn(form.className, generateColClass(form.col || "12"))}>
         <Component
-          {...(form.construction as any)}
+          {...construction}
           {...formControl(name)}
-          disabled={ws?.disabled}
-          readOnly={ws?.readonly}
+          disabled={disabled}
+          readOnly={readOnly}
           name={name}
         />
       </div>
