@@ -54,6 +54,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
   const [preview, setPreview]    =  useState("");
   const [drag, setDrag]          =  useState(false);
   const [cropSrc, setCropSrc]    =  useState<string | null>(null);
+  const [cropFile, setCropFile]  =  useState<File | null>(null);
   const [openCrop, setOpenCrop]  =  useState(false);
 
   const inputHandler                         =  useInputHandler(name, value, validations, register, true, unregister);
@@ -77,6 +78,7 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
   }, [value]);
 
   const openCropper = (file: File) => {
+    setCropFile(file);
     const reader = new FileReader();
     reader.onload = () => {
       setCropSrc(reader.result as string);
@@ -113,11 +115,15 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
 
   const onCropCancel = () => {
     setOpenCrop(false);
+    setCropFile(null);
+    setCropSrc(null);
     inputRef.current!.value = "";
   };
 
   const remove = () => {
     setPreview("");
+    setCropFile(null);
+    setCropSrc(null);
     onChange?.(null);
     inputRef.current && (inputRef.current.value = "");
   };
@@ -243,6 +249,8 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
               <CanvasCropper
                 src={cropSrc}
                 aspect={eval(currentAspect.replace(":", "/"))}
+                fileName={cropFile?.name}
+                fileType={cropFile?.type}
                 onDone={onCropDone}
               />
             </div>
@@ -255,6 +263,8 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
               <CanvasCropper
                 src={cropSrc}
                 aspect={eval(currentAspect.replace(":", "/"))}
+                fileName={cropFile?.name}
+                fileType={cropFile?.type}
                 onDone={onCropDone}
               />
             </div>
@@ -269,18 +279,21 @@ export const InputImageComponent: React.FC<InputImageProps> = ({
 
 
 interface CropperProps {
-  src      :  string;
-  aspect   :  number;
-  onDone  ?:  (file: File) => void;
+  src       :  string;
+  aspect    :  number;
+  fileName ?:  string;
+  fileType ?:  string;
+  onDone   ?:  (file: File) => void;
 }
 
 export const CanvasCropper: React.FC<CropperProps> = ({
   src,
   aspect,
+  fileName,
+  fileType,
   onDone,
 }) => {
   const canvasRef                =  useRef<HTMLCanvasElement>(null);
-  const previewRef               =  useRef<HTMLCanvasElement>(null);
   const pinchDistRef             =  useRef(0);
   const pinchStartZoomRef        =  useRef(1);
 
@@ -314,8 +327,8 @@ export const CanvasCropper: React.FC<CropperProps> = ({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const scaledW  =  img.width * zoom;
-    const scaledH  =  img.height * zoom;
+    const scaledW  =  img.naturalWidth * zoom;
+    const scaledH  =  img.naturalHeight * zoom;
 
     const x        =  pos.x - scaledW / 2 + CROP_W / 2;
     const y        =  pos.y - scaledH / 2 + CROP_SIZE / 2;
@@ -376,24 +389,63 @@ export const CanvasCropper: React.FC<CropperProps> = ({
   const performCrop = () => {
     if (!img) return;
 
-    const preview   =  previewRef.current!;
-    const pctx      =  preview.getContext("2d")!;
+    const scaleFactor = 1 / zoom;
 
-    preview.width   =  CROP_W;
-    preview.height  =  CROP_SIZE;
+    const scaledW = img.naturalWidth * zoom;
+    const scaledH = img.naturalHeight * zoom;
 
-    const scaledW   = img.width * zoom;
-    const scaledH   = img.height * zoom;
+    const cropDisplayX = (scaledW - CROP_W) / 2 - pos.x;
+    const cropDisplayY = (scaledH - CROP_SIZE) / 2 - pos.y;
 
-    const x         =  pos.x - scaledW / 2 + CROP_W / 2;
-    const y         =  pos.y - scaledH / 2 + CROP_SIZE / 2;
+    const sourceX = cropDisplayX * scaleFactor;
+    const sourceY = cropDisplayY * scaleFactor;
+    const sourceW = CROP_W * scaleFactor;
+    const sourceH = CROP_SIZE * scaleFactor;
 
-    pctx.drawImage(img, x, y, scaledW, scaledH);
+    const sx = Math.max(0, Math.min(img.naturalWidth - 1, sourceX));
+    const sy = Math.max(0, Math.min(img.naturalHeight - 1, sourceY));
+    const sw = Math.min(sourceW, img.naturalWidth - sx);
+    const sh = Math.min(sourceH, img.naturalHeight - sy);
 
-    preview.toBlob((blob) => {
-      const file = new File([blob!], "cropped.png", { type: "image/png" });
-      onDone?.(file);
-    });
+    let targetW = Math.round(sw);
+    let targetH = Math.round(sh);
+
+    const MAX_DIMENSION = 2560;
+    if (targetW > MAX_DIMENSION || targetH > MAX_DIMENSION) {
+      if (targetW >= targetH) {
+        targetH = Math.round((targetH * MAX_DIMENSION) / targetW);
+        targetW = MAX_DIMENSION;
+      } else {
+        targetW = Math.round((targetW * MAX_DIMENSION) / targetH);
+        targetH = MAX_DIMENSION;
+      }
+    }
+
+    const outputCanvas = document.createElement("canvas");
+    outputCanvas.width = targetW;
+    outputCanvas.height = targetH;
+
+    const octx = outputCanvas.getContext("2d");
+    if (!octx) return;
+
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
+
+    octx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+
+    const type = fileType || "image/jpeg";
+    const name = fileName || (type === "image/png" ? "cropped.png" : "cropped.jpg");
+    const quality = type === "image/png" ? undefined : 0.92;
+
+    outputCanvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const file = new File([blob], name, { type, lastModified: Date.now() });
+        onDone?.(file);
+      },
+      type,
+      quality
+    );
   };
 
 
@@ -557,8 +609,6 @@ export const CanvasCropper: React.FC<CropperProps> = ({
           block
         />
       </div>
-
-      <canvas ref={previewRef} className="hidden" />
     </div>
   );
 };
