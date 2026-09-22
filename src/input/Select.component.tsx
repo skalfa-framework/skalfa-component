@@ -15,6 +15,8 @@ export interface SelectOptionProps {
   value         :  string | number;
   searchable   ?:  string[];
   customLabel  ?:  ReactNode;
+  customOption ?:  ((option: any) => ReactNode) | ReactNode;
+  [key: string] :  any;
 };
 
 export interface SelectProps {
@@ -35,7 +37,7 @@ export interface SelectProps {
 
   options              ?:  SelectOptionProps[];
   searchable           ?:  boolean;
-  serverOptionControl  ?:  ApiType & { cacheName?: string | false };
+  serverOptionControl  ?:  ApiType & { cacheName?: string | boolean; selectableOption?: string[] };
   idbOptionControl     ?:  { store: string, labelKey: string, valueKey: string };
   serverSearchable     ?:  boolean;
   includedOptions      ?:  SelectOptionProps[];
@@ -45,6 +47,8 @@ export interface SelectProps {
   maxShowOption        ?:  number;
   creatable            ?:  boolean | string;
   creatableLabel       ?:  string;
+  customOption         ?:  (option: any) => ReactNode;
+  selectableOption     ?:  string[];
 
   onChange  ?:  (value: any, data?: any) => any;
   register    ?:  (name: string, validations?: ValidationRules) => void;
@@ -83,9 +87,11 @@ export function SelectComponent({
   exceptOptions = [],
   tempOptions,
   newOption,
-  maxShowOption = 10,
+  maxShowOption,
   creatable,
   creatableLabel,
+  customOption,
+  selectableOption,
 
   register,
   unregister,
@@ -184,13 +190,27 @@ export function SelectComponent({
       let newFilteredOptions: SelectOptionProps[] = [];
 
       if (searchable && !serverSearchable && dataOptions?.length) {
-        if (e.target.value) {
-          newFilteredOptions = dataOptions.filter((Option) => (Option.label as string)?.toLowerCase().indexOf(e.target.value.toLowerCase()) > -1).slice(0, maxShowOption);
+        if (e?.target?.value) {
+          const val = e.target.value.toLowerCase();
+          const matched = dataOptions.filter((opt) => {
+            if (opt.searchable?.some((s) => s.toLowerCase().indexOf(val) > -1)) return true;
+            if (typeof opt.label === "string" && opt.label.toLowerCase().indexOf(val) > -1) return true;
+            if (typeof opt.code === "string" && opt.code.toLowerCase().indexOf(val) > -1) return true;
+            if (typeof opt.name === "string" && opt.name.toLowerCase().indexOf(val) > -1) return true;
+            return false;
+          });
+          newFilteredOptions = typeof maxShowOption === "number" && maxShowOption > 0
+            ? matched.slice(0, maxShowOption)
+            : matched;
         } else {
-          newFilteredOptions = dataOptions.slice(0, maxShowOption);
+          newFilteredOptions = typeof maxShowOption === "number" && maxShowOption > 0
+            ? dataOptions.slice(0, maxShowOption)
+            : dataOptions;
         }
       } else {
-        newFilteredOptions = dataOptions || [];
+        newFilteredOptions = typeof maxShowOption === "number" && maxShowOption > 0
+          ? (dataOptions || []).slice(0, maxShowOption)
+          : (dataOptions || []);
       }
 
       setActiveOption(-1);
@@ -251,40 +271,68 @@ export function SelectComponent({
   const fetchOptions = async () => {
     setLoadingOption(true);
 
+    const selectableOpt = selectableOption || serverOptionControl?.selectableOption || serverOptionControl?.params?.selectableOption;
+
     const serverControl = {
       ...serverOptionControl,
-      params: serverSearchable ? { search: keywordSearch, ...(serverOptionControl?.params || {}) } : (serverOptionControl?.params || {}),
-      headers: { "X-Option": 1 }
+      params: {
+        ...(serverOptionControl?.params || {}),
+        ...(selectableOpt ? { selectableOption: selectableOpt } : {}),
+        ...(serverSearchable ? { search: keywordSearch } : {}),
+      },
+      headers: { "X-Option": 1, ...(serverOptionControl?.headers || {}) }
     };
 
-    const getCacheOptions = await cavity.get(serverOptionControl?.cacheName || `option_${serverOptionControl?.path}`)
-    const cacheOptions = (getCacheOptions?.data || []) as SelectOptionProps[];
-    
-    if (cacheOptions?.length) {
-      setDataOptions(
-        [...cacheOptions, ...includedOptions].filter(
-          (op: SelectOptionProps) => !exceptOptions?.includes(op.value)
-        )
-      );
-      setLoadingOption(false);
-    } else {
-      const mutateOptions = await api(serverControl || {});
-      setDataOptions(
-        [...(mutateOptions?.data?.data || []), ...(includedOptions || [])].filter(
-          (op: SelectOptionProps) => !exceptOptions?.includes(op.value)
-        )
-      );
-      setShowOption(true);
+    const cacheKey = typeof serverOptionControl?.cacheName === "string" && serverOptionControl.cacheName.trim() !== ""
+      ? serverOptionControl.cacheName
+      : serverOptionControl?.cacheName === true
+        ? `option_${serverOptionControl?.path || serverOptionControl?.url}`
+        : null;
 
-      if(serverOptionControl?.cacheName != false) {
-        cavity.set({
-          key: serverOptionControl?.cacheName || `option_${serverOptionControl?.path}`,
-          data: mutateOptions?.data,
-          expired: 5,
-        });
+    if (cacheKey) {
+      const getCacheOptions = await cavity.get(cacheKey);
+      const cacheData = getCacheOptions?.data;
+      const cacheOptions = (Array.isArray(cacheData?.data) ? cacheData.data : Array.isArray(cacheData) ? cacheData : []) as SelectOptionProps[];
+      
+      if (cacheOptions?.length) {
+        const cached = [...cacheOptions, ...includedOptions].filter(
+          (op: SelectOptionProps) => !exceptOptions?.includes(op.value)
+        );
+        setDataOptions(cached);
+        setFilteredOptions(typeof maxShowOption === "number" && maxShowOption > 0 ? cached.slice(0, maxShowOption) : cached);
+        setLoadingOption(false);
+        return;
       }
-      setLoadingOption(false);
     }
+
+    const mutateOptions = await api(serverControl || {});
+    const fetchedData = mutateOptions?.data?.data || mutateOptions?.data || [];
+    const optionsData = Array.isArray(fetchedData) ? fetchedData.map((item: any) => {
+      if (item && typeof item === "object") {
+        return {
+          ...item,
+          name: item.name ?? item.label,
+          label: item.label ?? item.name ?? item.code ?? item.value,
+        };
+      }
+      return item;
+    }) : [];
+
+    const finalOptions = [...optionsData, ...(includedOptions || [])].filter(
+      (op: SelectOptionProps) => !exceptOptions?.includes(op.value)
+    );
+    setDataOptions(finalOptions);
+    setFilteredOptions(typeof maxShowOption === "number" && maxShowOption > 0 ? finalOptions.slice(0, maxShowOption) : finalOptions);
+    setShowOption(true);
+
+    if (cacheKey) {
+      cavity.set({
+        key: cacheKey,
+        data: mutateOptions?.data,
+        expired: 5,
+      });
+    }
+    setLoadingOption(false);
   };
 
   const fetchIdbOptions = async () => {
@@ -309,6 +357,7 @@ export function SelectComponent({
       })
 
       setDataOptions(rows);
+      setFilteredOptions(typeof maxShowOption === "number" && maxShowOption > 0 ? rows.slice(0, maxShowOption) : rows);
       setLoadingOption(false);
     }
   };
@@ -402,7 +451,8 @@ export function SelectComponent({
             placeholder={!inputHandler.value || (Array.isArray(inputHandler.value) && !inputHandler.value.length) ? placeholder : ""}
             disabled={disabled}
             className={cn(
-              "input cursor-pointer",
+              "input cursor-pointer pr-10",
+              clearable && "pr-18",
               leftIcon && "input-with-left-icon",
               rightIcon && "input-with-right-icon",
               isCreatingNew && "pl-[4.8rem]",
@@ -493,22 +543,23 @@ export function SelectComponent({
                   return (
                     <div key={key} className="input-values-item">
                       <span>{dataOptions?.find((option) => option.value == item)?.label}</span>
-                      <Icon
-                        icon="solid/times"
-                        className="input-values-delete"
-                        onClick={() => {
-                          const values = Array().concat(inputHandler.value);
-                          const index = values.findIndex((val: string | number) => val == item);
+                      <div className="input-values-delete">
+                        <Icon
+                          icon="solid/times"
+                          onClick={() => {
+                            const values = Array().concat(inputHandler.value);
+                            const index = values.findIndex((val: string | number) => val == item);
 
-                          inputHandler.setValue(values.filter((_, val) => val != index));
+                            inputHandler.setValue(values.filter((_, val) => val != index));
 
-                          if (!values.filter((_, val) => val != index)?.length) {
-                            setInputShowValue("");
-                            serverSearchable && setKeyword("");
-                            onChange?.("");
-                          }
-                        }}
-                      />
+                            if (!values.filter((_, val) => val != index)?.length) {
+                              setInputShowValue("");
+                              serverSearchable && setKeyword("");
+                              onChange?.("");
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -650,7 +701,7 @@ export function SelectComponent({
                   return (
                     <li
                       className={cn(
-                        "input-suggest",
+                        "input-suggest flex items-center",
                         (key == activeOption || selected) && "input-suggest-active",
                         pcn<CT>(className, "suggest-item"),
                         (key == activeOption || selected) && pcn<CT>(className, "suggest-item", "active")
@@ -669,8 +720,11 @@ export function SelectComponent({
                         setIsCreatingNew(false);
 
                         if (!multiple) {
-                          setInputShowValue(option.label);
-                          serverSearchable && setKeyword(option.label as string);
+                          const displayLabel = typeof option.label === "string" || typeof option.label === "number"
+                            ? option.label
+                            : (option.name || option.code || option.value);
+                          setInputShowValue(displayLabel);
+                          serverSearchable && setKeyword(typeof displayLabel === "string" ? displayLabel : "");
                           inputHandler.setValue(option.value);
                           onChange?.(option.value, option);
                         } else {
@@ -700,7 +754,11 @@ export function SelectComponent({
                           className="select-suggest-check"
                         />
                       )}
-                      {option.label}
+                      {customOption
+                        ? customOption(option)
+                        : (option.customOption
+                            ? (typeof option.customOption === "function" ? option.customOption(option) : option.customOption)
+                            : (option.customLabel || option.label))}
                     </li>
                   );
                 })}

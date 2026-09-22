@@ -111,7 +111,7 @@ export function InputDateComponent({
               value={inputHandler.value}
               onChange={(e) => {
                 inputHandler.setValue(e.target.value);
-                inputHandler.setValue(false);
+                inputHandler.setIdle(false);
                 onChange?.(e.target.value);
               }}
               onFocus={(e) => {
@@ -158,9 +158,12 @@ export function InputDateComponent({
             {!isSm && inputHandler.focus && (
               <div className="input-date-picker-popover">
                 <InputDatePickerComponent
+                  value={inputHandler.value}
                   onChange={(e) => {
                     inputHandler.setValue(e);
+                    inputHandler.setIdle(false);
                     onChange?.(e);
+                    inputHandler.setFocus(false);
                   }}
                 />
               </div>
@@ -191,8 +194,10 @@ export function InputDateComponent({
         >
           <div className="p-4">
             <InputDatePickerComponent
+              value={inputHandler.value}
               onChange={(e) => {
                 inputHandler.setValue(e);
+                inputHandler.setIdle(false);
                 onChange?.(e);
               }}
             />
@@ -206,6 +211,7 @@ export function InputDateComponent({
 
 
 export interface InputDatePickerProps {
+  value         ?:  string;
   onChange      ?:  (date: string) => void;
   minDate       ?:  string;
   maxDate       ?:  string;
@@ -215,6 +221,7 @@ export interface InputDatePickerProps {
 
 
 export const InputDatePickerComponent: React.FC<InputDatePickerProps> = ({
+  value,
   onChange,
   minDate,
   maxDate,
@@ -223,35 +230,51 @@ export const InputDatePickerComponent: React.FC<InputDatePickerProps> = ({
   const activeYearRef     =  useRef<HTMLDivElement | null>(null);
   const containerYearRef  =  useRef<HTMLDivElement | null>(null);
 
-  const [currentDate, setCurrentDate]    =  useState(moment());
-  const [selectedDate, setSelectedDate]  =  useState(moment());
+  const initialDate = useMemo(() => {
+    return value && moment(value).isValid() ? moment(value) : moment();
+  }, [value]);
+
+  const [currentDate, setCurrentDate]    =  useState(initialDate);
+  const [selectedDate, setSelectedDate]  =  useState(initialDate);
+
+  useEffect(() => {
+    if (value && moment(value).isValid()) {
+      const m = moment(value);
+      setCurrentDate(m);
+      setSelectedDate(m);
+    }
+  }, [value]);
 
   const startDate  =  moment(currentDate).startOf("month").startOf("week");
   const endDate    =  moment(currentDate).endOf("month").endOf("week");
 
-  const handlePrevMonth = () => setCurrentDate(moment(currentDate).subtract(1, "month"));
-  const handleNextMonth = () => setCurrentDate(moment(currentDate).add(1, "month"));
+  const handlePrevMonth = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setCurrentDate(moment(currentDate).subtract(1, "month"));
+  };
+  const handleNextMonth = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setCurrentDate(moment(currentDate).add(1, "month"));
+  };
 
   const handleDateClick = (date: moment.Moment) => {
-    if ((minDate && date.isBefore(moment(minDate))) || (maxDate && date.isAfter(moment(maxDate)))) { return; }
+    if ((minDate && date.isBefore(moment(minDate), "day")) || (maxDate && date.isAfter(moment(maxDate), "day"))) {
+      return;
+    }
 
     setSelectedDate(date);
     onChange?.(date.format("YYYY-MM-DD"));
   };
 
   const renderDays = () => {
-    const days = [];
-    const startDay = moment(startDate);
-
-    for (let i = 0; i < 7; i++) {
-      days.push(
-        <div key={i} className="text-center font-bold">
-          {startDay.add(i, "days").format("dd")}
-        </div>
-      );
-    }
-
-    return days;
+    const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    return dayNames.map((d, i) => (
+      <div key={i} className="text-center text-[11px] font-semibold text-light-foreground">
+        {d}
+      </div>
+    ));
   };
 
   const renderCells = () => {
@@ -262,23 +285,35 @@ export const InputDatePickerComponent: React.FC<InputDatePickerProps> = ({
     while (day.isBefore(endDate) || day.isSame(endDate, "day")) {
       for (let i = 0; i < 7; i++) {
         const cloneDay = moment(day);
+        const isCurrentMonth = day.isSame(currentDate, "month");
+        const isSelected = day.isSame(selectedDate, "day");
+        const isToday = day.isSame(moment(), "day");
+        const isDisabled =
+          (minDate && day.isBefore(moment(minDate), "day")) ||
+          (maxDate && day.isAfter(moment(maxDate), "day"));
 
         days.push(
-          <div
-            key={day.toString()}
-            className={`w-8 aspect-square flex items-center justify-center text-center rounded-lg transition-all 
-              ${day.isSame(currentDate, "month") ? "text-foreground" : "text-light-foreground"} 
-              ${day.isSame(selectedDate, "day") ? "bg-primary text-background" : "hover:bg-light-primary"}
-              ${day.isSame(moment(), "day") ? "border !border-primary" : "hover:bg-light-primary"} 
-              ${(minDate && day.isBefore(moment(minDate))) || (maxDate && day.isAfter(moment(maxDate))) ? "opacity-10 cursor-not-allowed" : "cursor-pointer"}`}
-            onClick={() => handleDateClick(cloneDay)}
-          >{day.format("D")}</div>
+          <button
+            key={day.format("YYYY-MM-DD")}
+            type="button"
+            className={cn(
+              "w-8 h-8 text-xs flex items-center justify-center text-center rounded-lg transition-all border-none select-none",
+              isCurrentMonth ? "text-foreground font-medium" : "text-light-foreground/40",
+              isSelected ? "bg-primary text-white font-bold hover:bg-primary" : (
+                isToday ? "border border-primary font-semibold hover:bg-light-primary" : "hover:bg-light-primary"
+              ),
+              isDisabled ? "opacity-20 cursor-not-allowed pointer-events-none" : "cursor-pointer"
+            )}
+            onClick={() => !isDisabled && handleDateClick(cloneDay)}
+          >
+            {day.format("D")}
+          </button>
         );
 
         day.add(1, "day");
       }
 
-      rows.push(<div key={day.toString()} className="grid grid-cols-7 gap-1">{days}</div>);
+      rows.push(<div key={day.format("YYYY-MM-DD-row")} className="grid grid-cols-7 gap-1">{days}</div>);
 
       days = [];
     }
@@ -289,7 +324,7 @@ export const InputDatePickerComponent: React.FC<InputDatePickerProps> = ({
   const years = useMemo(() => {
     const dumpYears = [];
 
-    for (let i = 1945; i <= moment().year(); i++) {
+    for (let i = 1940; i <= moment().year() + 10; i++) {
       dumpYears.push(i);
     }
 
@@ -298,55 +333,60 @@ export const InputDatePickerComponent: React.FC<InputDatePickerProps> = ({
 
   useEffect(() => {
     if (activeYearRef.current && containerYearRef.current) {
-      containerYearRef.current.scrollTo({
-        top: activeYearRef.current.offsetTop - containerYearRef.current.offsetTop,
-      });
+      const container = containerYearRef.current;
+      const activeEl = activeYearRef.current;
+      container.scrollTop = activeEl.offsetTop - container.offsetTop - (container.clientHeight / 2) + (activeEl.clientHeight / 2);
     }
-  }, []);
+  }, [currentDate.year()]);
 
   return (
-    <div className="w-full flex gap-2 max-h-[260]">
+    <div className="w-full flex gap-2.5 h-[260px] select-none">
       <div
-        className="w-1/5 overflow-y-auto input-scroll pr-1"
+        className="w-[68px] shrink-0 h-full overflow-y-auto input-scroll pr-1 border-r border-stroke"
         ref={containerYearRef}
       >
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-0.5">
           {years?.map((item) => {
             const isActive = currentDate?.year() === item;
 
             return (
-              <>
-                <div
-                  key={item}
-                  ref={isActive ? activeYearRef : null}
-                  className={`py-1 px-2 font-semibold rounded-[6px] cursor-pointer ${isActive && "bg-light-primary"}`}
-                  onClick={() => setCurrentDate(moment().set("year", item))}
-                >
-                  {item}
-                </div>
-              </>
+              <div
+                key={item}
+                ref={isActive ? activeYearRef : null}
+                className={cn(
+                  "py-1 px-2 font-semibold rounded-md cursor-pointer transition-colors text-center select-none",
+                  isActive ? "bg-primary text-white" : "hover:bg-light-primary text-foreground"
+                )}
+                onClick={() => setCurrentDate(moment(currentDate).set("year", item))}
+              >
+                {item}
+              </div>
             );
           })}
         </div>
       </div>
-      <div className="w-4/5">
-        <div className="flex justify-between items-center mb-2">
+      <div className="flex-1 flex flex-col justify-between pl-0.5">
+        <div className="flex justify-between items-center mb-1.5">
           <button
+            type="button"
             onClick={handlePrevMonth}
-            className="w-8 text-sm aspect-square rounded-full cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center text-xs rounded-full hover:bg-light-primary transition-colors cursor-pointer border-none bg-transparent"
           >
-            <Icon icon="solid/chevron-left" />
+            <Icon icon="solid/chevron-left" className="w-3.5 h-3.5" />
           </button>
-          <h2 className="font-semibold">{currentDate.format("MMMM")}</h2>
+          <h2 className="font-semibold">
+            {currentDate.format("MMMM YYYY")}
+          </h2>
           <button
+            type="button"
             onClick={handleNextMonth}
-            className="w-8 text-sm aspect-square rounded-full cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center text-xs rounded-full hover:bg-light-primary transition-colors cursor-pointer border-none bg-transparent"
           >
-            <Icon icon="solid/chevron-right" />
+            <Icon icon="solid/chevron-right" className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-1 mb-2">{renderDays()}</div>
-        <div>{renderCells()}</div>
+        <div className="grid grid-cols-7 gap-1 mb-1">{renderDays()}</div>
+        <div className="flex flex-col gap-1">{renderCells()}</div>
       </div>
 
       {rightElement && <div>{rightElement}</div>}

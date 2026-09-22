@@ -188,6 +188,7 @@ export function InputDatetimeComponent({
                   />
                   {pickerType === "date" ? (
                     <InputDatePickerComponent
+                      value={dateValue}
                       onChange={(e) => {
                         setDateValue(e);
                         handleChange(e, timeValue);
@@ -246,6 +247,7 @@ export function InputDatetimeComponent({
             />
             {pickerType === "date" ? (
               <InputDatePickerComponent
+                value={dateValue}
                 onChange={(e) => {
                   setDateValue(e);
                   handleChange(e, timeValue);
