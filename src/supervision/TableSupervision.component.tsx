@@ -1,7 +1,8 @@
 "use client"
 
-import { Fragment, ReactNode, useEffect, useMemo } from "react";
-import { ApiType, cn, conversion, registry, shortcut, ShortcutHandler, UseResourceIdb, UseResourceProps, useResponsive, useTable } from "@utils";
+import { Fragment, ReactNode, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api, ApiType, cn, conversion, registry, shortcut, ShortcutHandler, UseResourceIdb, UseResourceProps, useResponsive, useTable } from "@utils";
 import { useToggleContext } from "@contexts";
 import { FloatingPageComponent, FloatingPageProps, ButtonComponent, TableColumnType, TableComponent, FormSupervisionComponent, FormType, ModalConfirmComponent, TypographyColumnComponent, ButtonProps, ModalConfirmProps, TableProps, ControlBarOptionType, SwipeActionType, BottomSheetProps } from "../";
 import { useLang } from "@skalfa/skalfa-lang";
@@ -105,12 +106,61 @@ export function TableSupervisionComponent({
   urlParam,
 }: TableSupervisionProps) {
   const l = useLang();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { tableKey, tableControl, data, selected, setSelected, checks, setChecks, reset, focus, setFocus }  =  useTable(fetchControl, id, title, (urlParam || true))
   const { setToggle, toggle }                                                                               =  useToggleContext()
   const { isSm }                                                                                            =  useResponsive();
 
   const toggleKey = useMemo(() => conversion.strSnake(tableKey).toUpperCase(), [tableKey])
+  const detailQueryId = searchParams.get("detail") || searchParams.get("openDetail");
+  const editQueryId = searchParams.get("edit");
+  const [directLoading, setDirectLoading] = useState(false);
+
+  // Auto-open floating detail or edit modal if query parameter is present in URL
+  useEffect(() => {
+    if (detailControl === false && !editQueryId) return;
+
+    const targetId = detailQueryId || editQueryId;
+    const isEdit = !!editQueryId && !detailQueryId;
+    if (!targetId) return;
+
+    if (!selected || String((selected as any)?.id) !== String(targetId)) {
+      setDirectLoading(true);
+      if (isEdit) {
+        setToggle(`MODAL_FORM_${toggleKey}`, true);
+      } else {
+        setToggle(`MODAL_SHOW_${toggleKey}`, true);
+      }
+
+      const basePath = (fetchControl as ApiType)?.path;
+      if (basePath) {
+        api({
+          path: `${basePath}/${targetId}`,
+          method: "GET",
+          params: (fetchControl as ApiType)?.params || {},
+        })
+          .then((res: any) => {
+            const item = res?.data?.data || res?.data || res;
+            if (item) {
+              setSelected(item);
+            } else {
+              setSelected({ id: Number(targetId) });
+            }
+          })
+          .catch(() => {
+            setSelected({ id: Number(targetId) });
+          })
+          .finally(() => {
+            setDirectLoading(false);
+          });
+      } else {
+        setSelected({ id: Number(targetId) });
+        setDirectLoading(false);
+      }
+    }
+  }, [detailQueryId, editQueryId, fetchControl, toggleKey]);
 
 
   useEffect(() => {
@@ -297,23 +347,35 @@ export function TableSupervisionComponent({
   // ============================
   const detailPage = useMemo(() => {
     if (!toggle[`MODAL_SHOW_${toggleKey}`]) return null;
+
+    if (directLoading && !selected) {
+      return (
+        <div className="p-12 text-center text-slate-400 space-y-2">
+          <div className="inline-block animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+          <p className="text-xs font-semibold">{l?.base?.loading ? l.base.loading() : "Memuat detail..."}</p>
+        </div>
+      );
+    }
+
+    if (!selected) return null;
+
     return (
       <div className="p-4">
         <div className={cn(
           "flex flex-col gap-y-4", 
         )}>
-          {!!selected && (typeof detailControl === "object" && typeof detailControl.content === "object" && detailControl?.content?.length ? detailControl?.content?.map((column, key) => {
+          {typeof detailControl === "object" && typeof detailControl.content === "object" && detailControl?.content?.length ? detailControl?.content?.map((column, key) => {
             if (typeof column === "string") {
               return (<TypographyColumnComponent
                 key={key}
                 title={columns?.find((c) => c.selector == column)?.label} 
-                content={selected[column]}
+                content={(selected as any)[column]}
               />)
             } else if (typeof column === "object") {
               return (<TypographyColumnComponent
                 key={key}
                 title={column?.label} 
-                content={typeof column?.item === "string" ? selected[column?.item] : column?.item(selected)}
+                content={typeof column?.item === "string" ? (selected as any)[column?.item] : column?.item(selected)}
               />)
             } else {
               return column?.(selected)
@@ -322,13 +384,13 @@ export function TableSupervisionComponent({
             <TypographyColumnComponent
               key={key}
               title={column.label} 
-              content={selected[column.selector]}
+              content={(selected as any)[column.selector]}
             />
-          )))}
+          ))}
         </div>
       </div>
     )
-  }, [selected, detailControl]);
+  }, [selected, detailControl, toggle[`MODAL_SHOW_${toggleKey}`], directLoading, columns]);
 
 
 
@@ -401,6 +463,14 @@ export function TableSupervisionComponent({
         payload={formControl?.payload}
         onSuccess={() => {
           reset();
+          if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has("edit")) {
+              url.searchParams.delete("edit");
+              const nextSearch = url.searchParams.toString();
+              router.replace(url.pathname + (nextSearch ? `?${nextSearch}` : ""), { scroll: false });
+            }
+          }
           setTimeout(() => { setToggle(`MODAL_FORM_${toggleKey}`, false) }, 900);
         }}
       />
@@ -553,7 +623,19 @@ export function TableSupervisionComponent({
 
       <FloatingPageComponent
         show={!!toggle[`MODAL_SHOW_${toggleKey}`]}
-        onClose={() => setToggle(`MODAL_SHOW_${toggleKey}`, false)}
+        onClose={() => {
+          setToggle(`MODAL_SHOW_${toggleKey}`, false);
+          setSelected(null);
+          if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has("detail") || url.searchParams.has("openDetail")) {
+              url.searchParams.delete("detail");
+              url.searchParams.delete("openDetail");
+              const nextSearch = url.searchParams.toString();
+              router.replace(url.pathname + (nextSearch ? `?${nextSearch}` : ""), { scroll: false });
+            }
+          }
+        }}
         title={l.base.detailTitle ? l.base.detailTitle() : "Detail"}
         className="bg-background"
         footer={renderTableAction(actionControl, undefined, {className: isSm ? "justify-end p-2 bg-background" : "justify-end", size: isSm ? "sm" : "md"})}
@@ -565,7 +647,17 @@ export function TableSupervisionComponent({
 
       <FloatingPageComponent
         show={!!toggle[`MODAL_FORM_${toggleKey}`]}
-        onClose={() => setToggle(`MODAL_FORM_${toggleKey}`, false)}
+        onClose={() => {
+          setToggle(`MODAL_FORM_${toggleKey}`, false);
+          if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has("edit")) {
+              url.searchParams.delete("edit");
+              const nextSearch = url.searchParams.toString();
+              router.replace(url.pathname + (nextSearch ? `?${nextSearch}` : ""), { scroll: false });
+            }
+          }
+        }}
         title={!!selected ? (l.base.editTitle ? l.base.editTitle() : "Edit") : (l.base.addTitle ? l.base.addTitle() : "Add")}
         className={cn("bg-white", formControl?.modalControl?.className)}
         {...formControl?.modalControl}
