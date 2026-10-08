@@ -36,7 +36,7 @@ export interface SelectProps {
   clearable    ?:  boolean;
 
   options              ?:  SelectOptionProps[];
-  searchable           ?:  boolean;
+  searchable           ?:  boolean | string[];
   serverOptionControl  ?:  ApiType & { cacheName?: string | boolean; selectableOption?: string[] };
   idbOptionControl     ?:  { store: string, labelKey: string, valueKey: string };
   serverSearchable     ?:  boolean;
@@ -192,11 +192,21 @@ export function SelectComponent({
       if (searchable && !serverSearchable && dataOptions?.length) {
         if (e?.target?.value) {
           const val = e.target.value.toLowerCase();
+          const searchKeys = Array.isArray(searchable) && searchable.length > 0
+            ? Array.from(new Set(["label", "name", "code", ...searchable]))
+            : ["label", "name", "code"];
+
           const matched = dataOptions.filter((opt) => {
             if (opt.searchable?.some((s) => s.toLowerCase().indexOf(val) > -1)) return true;
-            if (typeof opt.label === "string" && opt.label.toLowerCase().indexOf(val) > -1) return true;
-            if (typeof opt.code === "string" && opt.code.toLowerCase().indexOf(val) > -1) return true;
-            if (typeof opt.name === "string" && opt.name.toLowerCase().indexOf(val) > -1) return true;
+            for (const key of searchKeys) {
+              const fieldVal = opt[key];
+              if (
+                (typeof fieldVal === "string" || typeof fieldVal === "number") &&
+                String(fieldVal).toLowerCase().indexOf(val) > -1
+              ) {
+                return true;
+              }
+            }
             return false;
           });
           newFilteredOptions = typeof maxShowOption === "number" && maxShowOption > 0
@@ -278,7 +288,10 @@ export function SelectComponent({
       params: {
         ...(serverOptionControl?.params || {}),
         ...(selectableOpt ? { selectableOption: selectableOpt } : {}),
-        ...(serverSearchable ? { search: keywordSearch } : {}),
+        ...(serverSearchable ? {
+          search: keywordSearch,
+          ...(Array.isArray(searchable) ? { searchable } : {}),
+        } : {}),
       },
       headers: { "X-Option": 1, ...(serverOptionControl?.headers || {}) }
     };
