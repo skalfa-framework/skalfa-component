@@ -468,16 +468,19 @@ export function InputContentComponent({
 
   const updateActiveStates = useCallback(() => {
     const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+
+    const anchorNode = sel.anchorNode;
+    if (!anchorNode || !editorRef.current.contains(anchorNode)) return;
+
     let inH2 = false;
-    if (sel && sel.rangeCount > 0) {
-      let node: Node | null = sel.anchorNode;
-      while (node && node !== editorRef.current) {
-        if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "H2") {
-          inH2 = true;
-          break;
-        }
-        node = node.parentNode;
+    let node: Node | null = anchorNode;
+    while (node && node !== editorRef.current) {
+      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "H2") {
+        inH2 = true;
+        break;
       }
+      node = node.parentNode;
     }
 
     setActiveStates({
@@ -494,29 +497,98 @@ export function InputContentComponent({
       insertOrderedList: isCommandActive("insertOrderedList"),
     });
 
-    if (sel && sel.rangeCount > 0) {
-      let node: Node | null = sel.anchorNode;
-      let detectedColor = "normal";
-      let detectedSize: number | null = null;
-      while (node && node !== editorRef.current) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const el = node as HTMLElement;
-          if (el.dataset.color && detectedColor === "normal") {
-            detectedColor = el.dataset.color;
+    const range = sel.getRangeAt(0);
+
+    const checkElementForSize = (el: HTMLElement | null): number | null => {
+      if (!el) return null;
+      if (el.dataset?.size) {
+        const s = parseInt(el.dataset.size);
+        if (!isNaN(s)) return s;
+      }
+      if (el.style?.fontSize) {
+        const s = parseInt(el.style.fontSize);
+        if (!isNaN(s)) return s;
+      }
+      return null;
+    };
+
+    const checkElementForColor = (el: HTMLElement | null): string | null => {
+      if (!el) return null;
+      if (el.dataset?.color) {
+        return el.dataset.color;
+      }
+      return null;
+    };
+
+    let detectedSize: number | null = null;
+    let detectedColor = "normal";
+
+    // 1. Check upward from anchorNode, focusNode, startContainer, and commonAncestorContainer
+    const nodesToCheck: (Node | null)[] = [
+      sel.anchorNode,
+      sel.focusNode,
+      range.startContainer,
+      range.commonAncestorContainer,
+    ];
+
+    for (const start of nodesToCheck) {
+      let curr: Node | null = start;
+      while (curr && curr !== editorRef.current) {
+        if (curr.nodeType === Node.ELEMENT_NODE) {
+          const el = curr as HTMLElement;
+          if (detectedSize === null) {
+            detectedSize = checkElementForSize(el);
           }
-          if (el.dataset.size && detectedSize === null) {
-            const parsed = parseInt(el.dataset.size);
-            if (!isNaN(parsed)) detectedSize = parsed;
+          if (detectedColor === "normal") {
+            const c = checkElementForColor(el);
+            if (c) detectedColor = c;
+          }
+          if (detectedSize !== null && detectedColor !== "normal") break;
+        }
+        curr = curr.parentNode;
+      }
+      if (detectedSize !== null && detectedColor !== "normal") break;
+    }
+
+    // 2. If not found by traversing up, check inside the selected range
+    if (detectedSize === null || detectedColor === "normal") {
+      try {
+        const fragment = range.cloneContents();
+        if (detectedSize === null) {
+          const sizeEl = fragment.querySelector?.("[data-size], [style*='font-size']") as HTMLElement | null;
+          if (sizeEl) {
+            detectedSize = checkElementForSize(sizeEl);
           }
         }
-        node = node.parentNode;
-      }
-      setActiveColor(detectedColor);
-      if (detectedSize !== null) {
-        setTextSize(detectedSize);
-      }
+        if (detectedColor === "normal") {
+          const colorEl = fragment.querySelector?.("[data-color]") as HTMLElement | null;
+          if (colorEl) {
+            const c = checkElementForColor(colorEl);
+            if (c) detectedColor = c;
+          }
+        }
+      } catch {}
     }
+
+    setActiveColor(detectedColor);
+    setTextSize(detectedSize !== null ? detectedSize : 14);
   }, [isCommandActive]);
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+      if (editorRef.current.contains(sel.anchorNode)) {
+        saveSelection();
+        updateActiveStates();
+      }
+    };
+
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
+    };
+  }, [saveSelection, updateActiveStates]);
 
   useEffect(() => {
     shortcut.register("ctrl+b", () => handleBold(), "Bold text");
