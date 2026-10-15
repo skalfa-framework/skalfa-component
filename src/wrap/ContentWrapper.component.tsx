@@ -28,6 +28,12 @@ export function parseInlineFormats(text: string): string {
   if (!text) return "";
   let result = text;
 
+  // Clean / collapse nested or stacked tags from previous bugs
+  result = result.replace(/(?:\[color:\w+\])+(\[color:\w+\])/g, "$1");
+  result = result.replace(/(?:\[color\])+/g, "[color]");
+  result = result.replace(/(?:\[size:\d+\])+(\[size:\d+\])/g, "$1");
+  result = result.replace(/(?:\[size\])+/g, "[size]");
+
   result = result.replace(/\[color:(\w+)\](.*?)\[color\]/g, (_, color, content) => {
     const colorInfo = COLOR_MAP[color];
     const twClass = colorInfo?.tw || "text-foreground";
@@ -47,6 +53,12 @@ export function parseInlineFormats(text: string): string {
   result = result.replace(/(?<![:"'=])\/\/(.*?)(?<![:"'=])\/\//g, "<em>$1</em>");
   result = result.replace(/__(.*?)__/g, "<u>$1</u>");
   result = result.replace(/--(.*?)--/g, "<s>$1</s>");
+
+  // Clean up any remaining stray unparsed tags so raw tags never leak into UI
+  result = result.replace(/\[size:\d+\]/g, "");
+  result = result.replace(/\[size\]/g, "");
+  result = result.replace(/\[color:\w+\]/g, "");
+  result = result.replace(/\[color\]/g, "");
 
   return result;
 }
@@ -128,6 +140,89 @@ export function parseContentToHtml(content: string): string {
   return htmlParts.join("");
 }
 
+const BLOCK_TAGS = new Set([
+  "p", "div", "h1", "h2", "h3", "h4", "h5", "h6",
+  "ul", "ol", "li", "hr", "blockquote", "section", "article"
+]);
+
+function hasBlockDescendant(el: HTMLElement): boolean {
+  for (let i = 0; i < el.children.length; i++) {
+    const child = el.children[i];
+    if (BLOCK_TAGS.has(child.tagName.toLowerCase()) || hasBlockDescendant(child as HTMLElement)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function processNode(node: Node, lines: string[]) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = (node.textContent || "").replace(/\u200B/g, "").trim();
+    if (text) lines.push(text);
+    return;
+  }
+
+  if (node.nodeType !== Node.ELEMENT_NODE) return;
+  const el = node as HTMLElement;
+  const tag = el.tagName.toLowerCase();
+
+  if (el.classList.contains("skcontent-divider") || tag === "hr") {
+    lines.push("---");
+    return;
+  }
+
+  if (tag === "h2") {
+    lines.push(`##${parseChildrenToCustom(el)}##`);
+    return;
+  }
+
+  if (tag === "ul") {
+    for (let j = 0; j < el.children.length; j++) {
+      const li = el.children[j];
+      lines.push(`[list:bullet]${parseChildrenToCustom(li as HTMLElement)}[list]`);
+    }
+    return;
+  }
+
+  if (tag === "ol") {
+    for (let j = 0; j < el.children.length; j++) {
+      const li = el.children[j];
+      lines.push(`[list:number]${parseChildrenToCustom(li as HTMLElement)}[list]`);
+    }
+    return;
+  }
+
+  if (tag === "li") {
+    lines.push(`[list:bullet]${parseChildrenToCustom(el)}[list]`);
+    return;
+  }
+
+  // If this container has nested block children, process children individually
+  if (hasBlockDescendant(el)) {
+    for (let i = 0; i < el.childNodes.length; i++) {
+      processNode(el.childNodes[i], lines);
+    }
+    return;
+  }
+
+  const align = el.style.textAlign || (el.classList.contains("text-center") ? "center" : el.classList.contains("text-right") ? "right" : el.classList.contains("text-justify") ? "justify" : "");
+  const content = parseChildrenToCustom(el);
+
+  if (!content || content === "\n" || el.innerHTML === "<br>" || el.innerHTML === "<br/>") {
+    lines.push("");
+    return;
+  }
+
+  const subLines = content.split("\n");
+  for (const sub of subLines) {
+    if (align && align !== "left" && align !== "start") {
+      lines.push(`[align:${align}]${sub}[align]`);
+    } else {
+      lines.push(sub);
+    }
+  }
+}
+
 export function parseHtmlToContent(html: string): string {
   if (!html) return "";
 
@@ -137,65 +232,8 @@ export function parseHtmlToContent(html: string): string {
   if (!root) return "";
 
   const lines: string[] = [];
-
   for (let i = 0; i < root.childNodes.length; i++) {
-    const node = root.childNodes[i];
-
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent?.trim();
-      if (text) lines.push(parseNodeToCustom(node));
-      continue;
-    }
-
-    if (node.nodeType !== Node.ELEMENT_NODE) continue;
-    const el = node as HTMLElement;
-    const tag = el.tagName.toLowerCase();
-
-    if (el.classList.contains("skcontent-divider") || tag === "hr") {
-      lines.push("---");
-      continue;
-    }
-
-    if (tag === "h2") {
-      lines.push(`##${parseChildrenToCustom(el)}##`);
-      continue;
-    }
-
-    if (tag === "ul") {
-      for (let j = 0; j < el.children.length; j++) {
-        const li = el.children[j];
-        lines.push(`[list:bullet]${parseChildrenToCustom(li as HTMLElement)}[list]`);
-      }
-      continue;
-    }
-
-    if (tag === "ol") {
-      for (let j = 0; j < el.children.length; j++) {
-        const li = el.children[j];
-        lines.push(`[list:number]${parseChildrenToCustom(li as HTMLElement)}[list]`);
-      }
-      continue;
-    }
-
-    if (tag === "p" || tag === "div") {
-      const align = el.style.textAlign || (el.classList.contains("text-center") ? "center" : el.classList.contains("text-right") ? "right" : el.classList.contains("text-justify") ? "justify" : "");
-      const content = parseChildrenToCustom(el);
-
-      if (!content || content === "\n" || el.innerHTML === "<br>" || el.innerHTML === "<br/>") {
-        lines.push("");
-        continue;
-      }
-
-      if (align && align !== "left" && align !== "start") {
-        lines.push(`[align:${align}]${content}[align]`);
-      } else {
-        lines.push(content);
-      }
-      continue;
-    }
-
-    const fallback = parseChildrenToCustom(el);
-    if (fallback) lines.push(fallback);
+    processNode(root.childNodes[i], lines);
   }
 
   return lines.join("\n");
@@ -238,7 +276,7 @@ function parseNodeToCustom(node: Node): string {
     return `[link:${href}]${inner}[link]`;
   }
 
-  if (tag === "br") return "";
+  if (tag === "br") return "\n";
   if (tag === "hr") return "---";
 
   return inner;

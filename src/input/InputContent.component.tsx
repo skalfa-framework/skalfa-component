@@ -236,22 +236,50 @@ export function InputContentComponent({
         sel.addRange(newRange);
       }
     } else {
-      const span = document.createElement("span");
-      span.style.fontSize = `${clampedSize}px`;
-      span.dataset.size = clampedSize.toString();
+      let containerNode: Node | null = range.commonAncestorContainer;
+      if (containerNode.nodeType === Node.TEXT_NODE) containerNode = containerNode.parentNode;
+      const el = containerNode as HTMLElement | null;
 
-      try {
-        range.surroundContents(span);
-      } catch {
-        const fragment = range.extractContents();
+      if (el && el.dataset?.size && (el.textContent === sel.toString() || el.contains(range.commonAncestorContainer))) {
+        el.style.fontSize = `${clampedSize}px`;
+        el.dataset.size = clampedSize.toString();
+
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(el);
+        sel.addRange(newRange);
+      } else {
+        const span = document.createElement("span");
+        span.style.fontSize = `${clampedSize}px`;
+        span.dataset.size = clampedSize.toString();
+
+        let fragment: DocumentFragment;
+        try {
+          fragment = range.extractContents();
+        } catch {
+          fragment = document.createDocumentFragment();
+        }
+
+        // Strip existing size spans inside to prevent nesting
+        const innerSpans = fragment.querySelectorAll?.("span[data-size]");
+        if (innerSpans) {
+          innerSpans.forEach((inner) => {
+            const parent = inner.parentNode;
+            while (inner.firstChild) {
+              parent?.insertBefore(inner.firstChild, inner);
+            }
+            parent?.removeChild(inner);
+          });
+        }
+
         span.appendChild(fragment);
         range.insertNode(span);
-      }
 
-      sel.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.addRange(newRange);
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        sel.addRange(newRange);
+      }
     }
 
     saveSelection();
@@ -300,23 +328,51 @@ export function InputContentComponent({
         parent?.removeChild(containerNode);
       }
     } else {
-      const span = document.createElement("span");
-      span.className = colorInfo.tw;
-      span.style.color = colorInfo.css;
-      span.dataset.color = targetColor;
+      let containerNode: Node | null = range.commonAncestorContainer;
+      if (containerNode.nodeType === Node.TEXT_NODE) containerNode = containerNode.parentNode;
+      const el = containerNode as HTMLElement | null;
 
-      try {
-        range.surroundContents(span);
-      } catch {
-        const fragment = range.extractContents();
+      if (el && el.dataset?.color && (el.textContent === sel.toString() || el.contains(range.commonAncestorContainer))) {
+        el.className = colorInfo.tw;
+        el.style.color = colorInfo.css;
+        el.dataset.color = targetColor;
+
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(el);
+        sel.addRange(newRange);
+      } else {
+        const span = document.createElement("span");
+        span.className = colorInfo.tw;
+        span.style.color = colorInfo.css;
+        span.dataset.color = targetColor;
+
+        let fragment: DocumentFragment;
+        try {
+          fragment = range.extractContents();
+        } catch {
+          fragment = document.createDocumentFragment();
+        }
+
+        const innerSpans = fragment.querySelectorAll?.("span[data-color]");
+        if (innerSpans) {
+          innerSpans.forEach((inner) => {
+            const parent = inner.parentNode;
+            while (inner.firstChild) {
+              parent?.insertBefore(inner.firstChild, inner);
+            }
+            parent?.removeChild(inner);
+          });
+        }
+
         span.appendChild(fragment);
         range.insertNode(span);
-      }
 
-      sel.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.addRange(newRange);
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        sel.addRange(newRange);
+      }
     }
 
     setActiveColor(targetColor);
