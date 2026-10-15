@@ -238,15 +238,32 @@ export function InputContentComponent({
     } else {
       let containerNode: Node | null = range.commonAncestorContainer;
       if (containerNode.nodeType === Node.TEXT_NODE) containerNode = containerNode.parentNode;
-      const el = containerNode as HTMLElement | null;
 
-      if (el && el.dataset?.size && (el.textContent === sel.toString() || el.contains(range.commonAncestorContainer))) {
-        el.style.fontSize = `${clampedSize}px`;
-        el.dataset.size = clampedSize.toString();
+      // Find existing size span (either ancestor of containerNode or child of containerNode)
+      let sizeSpan: HTMLElement | null = null;
+      let curr: Node | null = containerNode;
+      while (curr && curr !== editorRef.current) {
+        if (curr.nodeType === Node.ELEMENT_NODE && ((curr as HTMLElement).dataset?.size || (curr as HTMLElement).style?.fontSize)) {
+          sizeSpan = curr as HTMLElement;
+          break;
+        }
+        curr = curr.parentNode;
+      }
+
+      if (!sizeSpan && containerNode && containerNode.nodeType === Node.ELEMENT_NODE) {
+        const child = (containerNode as HTMLElement).querySelector?.("span[data-size], span[style*='font-size']") as HTMLElement | null;
+        if (child && child.textContent?.trim() === sel.toString().trim()) {
+          sizeSpan = child;
+        }
+      }
+
+      if (sizeSpan && (sizeSpan.textContent?.trim() === sel.toString().trim() || sizeSpan.contains(range.commonAncestorContainer))) {
+        sizeSpan.style.fontSize = `${clampedSize}px`;
+        sizeSpan.dataset.size = clampedSize.toString();
 
         sel.removeAllRanges();
         const newRange = document.createRange();
-        newRange.selectNodeContents(el);
+        newRange.selectNodeContents(sizeSpan);
         sel.addRange(newRange);
       } else {
         const span = document.createElement("span");
@@ -261,7 +278,7 @@ export function InputContentComponent({
         }
 
         // Strip existing size spans inside to prevent nesting
-        const innerSpans = fragment.querySelectorAll?.("span[data-size]");
+        const innerSpans = fragment.querySelectorAll?.("span[data-size], span[style*='font-size']");
         if (innerSpans) {
           innerSpans.forEach((inner) => {
             const parent = inner.parentNode;
@@ -330,16 +347,32 @@ export function InputContentComponent({
     } else {
       let containerNode: Node | null = range.commonAncestorContainer;
       if (containerNode.nodeType === Node.TEXT_NODE) containerNode = containerNode.parentNode;
-      const el = containerNode as HTMLElement | null;
 
-      if (el && el.dataset?.color && (el.textContent === sel.toString() || el.contains(range.commonAncestorContainer))) {
-        el.className = colorInfo.tw;
-        el.style.color = colorInfo.css;
-        el.dataset.color = targetColor;
+      let colorSpan: HTMLElement | null = null;
+      let curr: Node | null = containerNode;
+      while (curr && curr !== editorRef.current) {
+        if (curr.nodeType === Node.ELEMENT_NODE && (curr as HTMLElement).dataset?.color) {
+          colorSpan = curr as HTMLElement;
+          break;
+        }
+        curr = curr.parentNode;
+      }
+
+      if (!colorSpan && containerNode && containerNode.nodeType === Node.ELEMENT_NODE) {
+        const child = (containerNode as HTMLElement).querySelector?.("span[data-color]") as HTMLElement | null;
+        if (child && child.textContent?.trim() === sel.toString().trim()) {
+          colorSpan = child;
+        }
+      }
+
+      if (colorSpan && (colorSpan.textContent?.trim() === sel.toString().trim() || colorSpan.contains(range.commonAncestorContainer))) {
+        colorSpan.className = colorInfo.tw;
+        colorSpan.style.color = colorInfo.css;
+        colorSpan.dataset.color = targetColor;
 
         sel.removeAllRanges();
         const newRange = document.createRange();
-        newRange.selectNodeContents(el);
+        newRange.selectNodeContents(colorSpan);
         sel.addRange(newRange);
       } else {
         const span = document.createElement("span");

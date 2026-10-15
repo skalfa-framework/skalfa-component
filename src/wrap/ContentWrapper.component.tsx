@@ -28,21 +28,29 @@ export function parseInlineFormats(text: string): string {
   if (!text) return "";
   let result = text;
 
-  // Clean / collapse nested or stacked tags from previous bugs
+  // Clean / collapse duplicate adjacent tags
   result = result.replace(/(?:\[color:\w+\])+(\[color:\w+\])/g, "$1");
   result = result.replace(/(?:\[color\])+/g, "[color]");
   result = result.replace(/(?:\[size:\d+\])+(\[size:\d+\])/g, "$1");
   result = result.replace(/(?:\[size\])+/g, "[size]");
 
-  result = result.replace(/\[color:(\w+)\](.*?)\[color\]/g, (_, color, content) => {
-    const colorInfo = COLOR_MAP[color];
-    const twClass = colorInfo?.tw || "text-foreground";
-    return `<span class="${twClass}" data-color="${color}">${content}</span>`;
-  });
+  // Resolve innermost size tags first in a loop
+  const sizeRegex = /\[size:(\d+)\]((?:(?!\[size).)*?)\[size\]/;
+  while (sizeRegex.test(result)) {
+    result = result.replace(/\[size:(\d+)\]((?:(?!\[size).)*?)\[size\]/g, (_, size, content) => {
+      return `<span style="font-size:${size}px" data-size="${size}">${content}</span>`;
+    });
+  }
 
-  result = result.replace(/\[size:(\d+)\](.*?)\[size\]/g, (_, size, content) => {
-    return `<span style="font-size:${size}px" data-size="${size}">${content}</span>`;
-  });
+  // Resolve innermost color tags first in a loop
+  const colorRegex = /\[color:(\w+)\]((?:(?!\[color).)*?)\[color\]/;
+  while (colorRegex.test(result)) {
+    result = result.replace(/\[color:(\w+)\]((?:(?!\[color).)*?)\[color\]/g, (_, color, content) => {
+      const colorInfo = COLOR_MAP[color];
+      const twClass = colorInfo?.tw || "text-foreground";
+      return `<span class="${twClass}" data-color="${color}">${content}</span>`;
+    });
+  }
 
   result = result.replace(/\[link:(.*?)\](.*?)\[link\]/g, (_, url, content) => {
     const formattedUrl = formatLinkUrl(url);
@@ -263,12 +271,16 @@ function parseNodeToCustom(node: Node): string {
   if (tag === "u") return `__${inner}__`;
   if (tag === "s" || tag === "strike" || tag === "del") return `--${inner}--`;
 
-  if (tag === "span" && el.dataset.color) {
-    return `[color:${el.dataset.color}]${inner}[color]`;
-  }
-
-  if (tag === "span" && el.dataset.size) {
-    return `[size:${el.dataset.size}]${inner}[size]`;
+  if (tag === "span") {
+    let res = inner;
+    const detectedSize = el.dataset?.size || (el.style?.fontSize ? parseInt(el.style.fontSize).toString() : null);
+    if (detectedSize) {
+      res = `[size:${detectedSize}]${res}[size]`;
+    }
+    if (el.dataset.color) {
+      res = `[color:${el.dataset.color}]${res}[color]`;
+    }
+    return res;
   }
 
   if (tag === "a") {
