@@ -101,8 +101,10 @@ export function InputContentComponent({
   const [linkUrl, setLinkUrl]                   = useState("");
   const savedSelectionRef = useRef<Range | null>(null);
 
-  const [textSize, setTextSize]       = useState<number>(14);
-  const [activeColor, setActiveColor] = useState<string>("normal");
+  const [textSize, setTextSize]             = useState<number>(14);
+  const [textSizeInput, setTextSizeInput]   = useState<string>("14");
+  const isFocusingSizeInput                 = useRef(false);
+  const [activeColor, setActiveColor]       = useState<string>("normal");
   const [activeStates, setActiveStates] = useState({
     header: false,
     bold: false,
@@ -116,6 +118,12 @@ export function InputContentComponent({
     insertUnorderedList: false,
     insertOrderedList: false,
   });
+
+  useEffect(() => {
+    if (!isFocusingSizeInput.current) {
+      setTextSizeInput(textSize.toString());
+    }
+  }, [textSize]);
 
   useEffect(() => {
     if (isInternalChange.current) {
@@ -207,6 +215,7 @@ export function InputContentComponent({
   const handleFontSizeChange = useCallback((newSize: number) => {
     const clampedSize = Math.max(8, Math.min(72, newSize));
     setTextSize(clampedSize);
+    setTextSizeInput(clampedSize.toString());
 
     editorRef.current?.focus();
     restoreSelection();
@@ -845,10 +854,35 @@ export function InputContentComponent({
               onClick={(e: any) => { e?.preventDefault?.(); handleFontSizeChange(textSize - 1); }}
             />
             <input
-              type="number"
-              value={textSize}
-              onChange={(e) => handleFontSizeChange(parseInt(e.target.value) || 14)}
-              onFocus={() => saveSelection()}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={textSizeInput}
+              onFocus={() => {
+                isFocusingSizeInput.current = true;
+                saveSelection();
+              }}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                setTextSizeInput(val);
+                const num = parseInt(val);
+                if (!isNaN(num) && num >= 8 && num <= 72) {
+                  handleFontSizeChange(num);
+                }
+              }}
+              onBlur={() => {
+                isFocusingSizeInput.current = false;
+                const parsed = parseInt(textSizeInput);
+                const clamped = isNaN(parsed) ? 14 : Math.max(8, Math.min(72, parsed));
+                setTextSizeInput(clamped.toString());
+                handleFontSizeChange(clamped);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
               className="w-10 h-7 text-xs text-center border border-stroke rounded focus:outline-none focus:border-primary bg-background text-foreground select-none"
             />
             <ButtonComponent
