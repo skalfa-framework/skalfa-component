@@ -109,7 +109,7 @@ export function TableSupervisionComponent({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { tableKey, tableControl, data, selected, setSelected, checks, setChecks, reset, focus, setFocus }  =  useTable(fetchControl, id, title, (urlParam || true))
+  const { tableKey, tableControl, data, selected, setSelected, checks, setChecks, reset, focus, setFocus }  =  useTable(fetchControl, id, title, (urlParam ?? true))
   const { setToggle, toggle }                                                                               =  useToggleContext()
   const { isSm }                                                                                            =  useResponsive();
 
