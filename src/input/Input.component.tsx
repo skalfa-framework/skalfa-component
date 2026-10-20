@@ -24,6 +24,7 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   uppercase     ?:  boolean;
   lowercase     ?:  boolean;
   multiple      ?:  boolean;
+  showable      ?:  boolean;
 
   onChange  ?:  (value: any) => any;
   register    ?:  (name: string, validations?: ValidationRules) => void;
@@ -53,6 +54,7 @@ export function InputComponent({
   uppercase,
   lowercase,
   multiple,
+  showable,
 
   register,
   unregister,
@@ -67,6 +69,11 @@ export function InputComponent({
   const [showSuggestions, setShowSuggestions]          =  useState(false);
   const [dataSuggestions, setDataSuggestions]          =  useState<string[] | undefined>([]);
   const [filteredSuggestions, setFilteredSuggestions]  =  useState<string[] | undefined>([]);
+  const [showPassword, setShowPassword]                =  useState(false);
+
+  const isPassword = props.type === "password";
+  const isShowable = showable ?? (isPassword && !rightIcon);
+  const computedType = isShowable ? (showPassword ? "text" : "password") : props.type;
 
 
   // =========================>
@@ -187,6 +194,7 @@ export function InputComponent({
         <div className="relative">
           <input
             {...props}
+            type={computedType}
             ref={ref}
             id={randomId}
             placeholder={!multiple || (multiple && !inputHandler.value?.length) ? props.placeholder : ""}
@@ -194,7 +202,7 @@ export function InputComponent({
               "input",
               props.type == "file" && "input-file",
               leftIcon && "input-with-left-icon",
-              rightIcon && "input-with-right-icon",
+              (rightIcon || isShowable) && "input-with-right-icon",
               !!invalidMessage && "input-error",
               pcn<CT>(className, "base"),
               !!invalidMessage && pcn<CT>(className, "base", "error"),
@@ -270,7 +278,27 @@ export function InputComponent({
             />
           )}
 
-          {rightIcon && (
+          {isShowable ? (
+            <button
+              type="button"
+              tabIndex={-1}
+              disabled={props.disabled}
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className={cn(
+                "input-icon",
+                "input-icon-right",
+                "cursor-pointer select-none focus:outline-none transition-colors",
+                props.disabled && "input-icon-disabled cursor-not-allowed",
+                inputHandler.focus && "input-icon-focus",
+                pcn<CT>(className, "icon"),
+                props.disabled && pcn<CT>(className, "icon", "disabled"),
+                inputHandler.focus && pcn<CT>(className, "icon", "focus"),
+              )}
+            >
+              <Icon icon={showPassword ? "solid/eye-off" : "solid/eye"} />
+            </button>
+          ) : rightIcon ? (
             <Icon
               className={cn(
                 "input-icon",
@@ -283,7 +311,7 @@ export function InputComponent({
               )}
               icon={rightIcon}
             />
-          )}
+          ) : null}
         </div>
 
         {!!dataSuggestions?.length && showSuggestions && !!filteredSuggestions?.length && (

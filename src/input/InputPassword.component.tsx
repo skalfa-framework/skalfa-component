@@ -14,6 +14,7 @@ export interface InputPasswordProps extends Omit<InputHTMLAttributes<HTMLInputEl
   tip        ?:  string | ReactNode;
   leftIcon   ?:  any;
   rightIcon  ?:  any;
+  showable   ?:  boolean;
 
   value        ?:  string;
   invalid      ?:  string;
@@ -42,14 +43,19 @@ export function InputPasswordComponent({
   register,
   unregister,
   onChange,
+  showable,
 
   className = "",
   ...props
 }: InputPasswordProps) {
-  const l                                      =  useLang()
-  const [password, setPassword]                =  useState("");
-  const [confirmPassword, setConfirmPassword]  =  useState("");
-  const [strength, setStrength]                =  useState<"weak" | "strong" | "excellent" | "">("");
+  const l                                              =  useLang()
+  const [password, setPassword]                        =  useState("");
+  const [confirmPassword, setConfirmPassword]          =  useState("");
+  const [strength, setStrength]                        =  useState<"weak" | "strong" | "excellent" | "">("");
+  const [showPassword, setShowPassword]                =  useState(false);
+  const [showConfirmPassword, setShowConfirmPassword]  =  useState(false);
+
+  const isShowable = showable ?? (!rightIcon);
 
 
   // =========================>
@@ -120,12 +126,12 @@ export function InputPasswordComponent({
       <div className="relative">
         <input
           {...props}
-          type="password"
+          type={isShowable && showPassword ? "text" : "password"}
           id={randomId}
           className={cn(
             "input",
             leftIcon && "input-with-left-icon",
-            rightIcon && "input-with-right-icon",
+            (rightIcon || isShowable) && "input-with-right-icon",
             !!invalidMessage && "input-error",
             pcn<CT>(className, "base"),
           )}
@@ -156,7 +162,25 @@ export function InputPasswordComponent({
             icon={leftIcon}
           />
         )}
-        {rightIcon && (
+        {isShowable ? (
+          <button
+            type="button"
+            tabIndex={-1}
+            disabled={props.disabled}
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className={cn(
+              "input-icon",
+              "input-icon-right",
+              "cursor-pointer select-none focus:outline-none transition-colors",
+              props.disabled && "input-icon-disabled cursor-not-allowed",
+              inputHandler.focus && "input-icon-focus",
+              pcn<CT>(className, "icon")
+            )}
+          >
+            <Icon icon={showPassword ? "solid/eye-off" : "solid/eye"} />
+          </button>
+        ) : rightIcon ? (
           <Icon
             className={cn(
               "input-icon",
@@ -165,7 +189,7 @@ export function InputPasswordComponent({
             )}
             icon={rightIcon}
           />
-        )}
+        ) : null}
       </div>
 
       {invalidMessage && (
@@ -222,11 +246,11 @@ export function InputPasswordComponent({
             {...props}
             placeholder={l.base.passwordConfirm ? l.base.passwordConfirm() : "Repeat password..."}
             id={randomConfirmId}
-            type="password"
+            type={isShowable && showConfirmPassword ? "text" : "password"}
             className={cn(
               "input",
               leftIcon && "input-with-left-icon",
-              rightIcon && "input-with-right-icon",
+              (rightIcon || isShowable) && "input-with-right-icon",
               pcn<CT>(className, "base"),
               isConfirmMismatch && "input-error",
             )}
@@ -237,6 +261,45 @@ export function InputPasswordComponent({
             }}
             autoComplete="off"
           />
+
+          {leftIcon && (
+            <Icon
+              className={cn(
+                "input-icon",
+                "input-icon-left",
+                pcn<CT>(className, "icon")
+              )}
+              icon={leftIcon}
+            />
+          )}
+
+          {isShowable ? (
+            <button
+              type="button"
+              tabIndex={-1}
+              disabled={props.disabled}
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className={cn(
+                "input-icon",
+                "input-icon-right",
+                "cursor-pointer select-none focus:outline-none transition-colors",
+                props.disabled && "input-icon-disabled cursor-not-allowed",
+                pcn<CT>(className, "icon")
+              )}
+            >
+              <Icon icon={showConfirmPassword ? "solid/eye-off" : "solid/eye"} />
+            </button>
+          ) : rightIcon ? (
+            <Icon
+              className={cn(
+                "input-icon",
+                "input-icon-right",
+                pcn<CT>(className, "icon")
+              )}
+              icon={rightIcon}
+            />
+          ) : null}
         </div>
       </div>
 
